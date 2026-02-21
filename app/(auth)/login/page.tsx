@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/"
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -99,14 +100,27 @@ export default function LoginPage() {
               Password
             </Label>
           </div>
-          <Input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            className="h-12 border-slate-200 focus:border-slate-900 focus:ring-slate-900"
-            {...register("password")}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              className="h-12 border-slate-200 focus:border-slate-900 focus:ring-slate-900 pr-12"
+              {...register("password")}
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-sm text-red-500">{errors.password.message}</p>
           )}
@@ -127,6 +141,16 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
+
+      {/* Register link */}
+      <div className="text-center">
+        <p className="text-sm text-slate-500">
+          Don't have an account?{" "}
+          <Link href="/register" className="text-slate-900 font-medium hover:underline">
+            Create one
+          </Link>
+        </p>
+      </div>
 
       {/* Demo credentials */}
       <div className="pt-6 border-t border-slate-100">

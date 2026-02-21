@@ -4,11 +4,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Building2, Plus, Edit, MapPin, Users, Clock } from "lucide-react"
+import type { Location, LocationAssignment, LocationCertification } from "@prisma/client"
+
+type LocationWithRelations = Location & {
+  managers: (LocationAssignment & {
+    manager: {
+      id: string
+      name: string
+      email: string
+    }
+  })[]
+  certifications: (LocationCertification & {
+    user: {
+      id: string
+      name: string
+    }
+  })[]
+  _count: {
+    shifts: number
+  }
+}
 
 export default async function AdminLocationsPage() {
   const session = await auth()
   
-  const locations = await prisma.location.findMany({
+  const locations: LocationWithRelations[] = await prisma.location.findMany({
     include: {
       managers: {
         include: {

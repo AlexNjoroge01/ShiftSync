@@ -89,12 +89,62 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()
+    const body = await request.json()
     
-    if (!session?.user || session.user.role !== "ADMIN") {
+    // Check if this is a public registration (no session) or admin creation
+    const isPublicRegistration = !session?.user
+    
+    // For public registration, only allow STAFF role
+    if (isPublicRegistration) {
+      // Validate minimum required fields for registration
+      const registerSchema = z.object({
+        name: z.string().min(2, "Name must be at least 2 characters"),
+        email: z.string().email("Invalid email address"),
+        password: z.string().min(8, "Password must be at least 8 characters"),
+        role: z.literal("STAFF").optional(), // Only allow STAFF for public registration
+      })
+      
+      const validatedData = registerSchema.parse(body)
+      
+      // Check if email already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email: validatedData.email },
+      })
+
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "Email already in use" },
+          { status: 400 }
+        )
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(validatedData.password, 10)
+
+      // Create user
+      const user = await prisma.user.create({
+        data: {
+          name: validatedData.name,
+          email: validatedData.email,
+          hashedPassword,
+          role: "STAFF",
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      })
+
+      return NextResponse.json(user)
+    }
+    
+    // Admin creation flow
+    if (session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json()
     const validatedData = createUserSchema.parse(body)
 
     // Check if email already exists
