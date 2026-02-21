@@ -504,14 +504,6 @@ NEXTAUTH_URL
 RESEND_API_KEY
 ```
 
-**Vercel Config:**
-- `vercel.json` with cron job:
-```json
-{
-  "crons": [{ "path": "/api/cron/expire-swaps", "schedule": "0 * * * *" }]
-}
-```
-
 **Database:**
 - PostgreSQL (connection pooling compatible with Prisma adapter pg)
 
