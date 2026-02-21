@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { loginSchema, type LoginInput } from "@/types"
 import Link from "next/link"
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/"
@@ -145,7 +145,7 @@ export default function LoginPage() {
       {/* Register link */}
       <div className="text-center">
         <p className="text-sm text-slate-500">
-          Don't have an account?{" "}
+          Do not have an account?{" "}
           <Link href="/register" className="text-slate-900 font-medium hover:underline">
             Create one
           </Link>
@@ -172,5 +172,17 @@ export default function LoginPage() {
         <p className="text-xs text-slate-400 mt-3">Password for all accounts: <code className="bg-slate-100 px-1 rounded">password123</code></p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

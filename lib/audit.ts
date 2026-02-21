@@ -37,8 +37,8 @@ export async function createAuditLog(params: AuditLogParams) {
         action: params.action,
         entityType: params.entityType,
         entityId: params.entityId,
-        before: params.before ?? null,
-        after: params.after ?? null,
+        before: params.before ? JSON.parse(JSON.stringify(params.before)) : null,
+        after: params.after ? JSON.parse(JSON.stringify(params.after)) : null,
       },
     })
     return auditLog

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import type { Prisma, SwapRequestType, SwapRequestStatus } from "@prisma/client"
 
 const createSwapRequestSchema = z.object({
   type: z.enum(["SWAP", "DROP"]),
@@ -23,20 +24,16 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const type = searchParams.get("type")
 
-    const where: {
-      status?: string
-      type?: string
-      OR?: Array<{ requesterId?: string; targetUserId?: string; shift?: { locationId: { in: string[] } } }>
-    } = {}
+    const where: Prisma.SwapRequestWhereInput = {}
 
     // Filter by status
     if (status) {
-      where.status = status
+      where.status = status as SwapRequestStatus
     }
 
     // Filter by type
     if (type) {
-      where.type = type as "SWAP" | "DROP"
+      where.type = type as SwapRequestType
     }
 
     // Role-based filtering
@@ -52,7 +49,7 @@ export async function GET(request: NextRequest) {
         where: { managerId: session.user.id },
         select: { locationId: true },
       })
-      const locationIds = managerLocations.map((item) => item.locationId)
+      const locationIds = managerLocations.map((item: { locationId: string }) => item.locationId)
       
       where.OR = [
         { shift: { locationId: { in: locationIds } } },

@@ -25,8 +25,8 @@ declare module "next-auth" {
   }
 }
 
-// Extended JWT type
-declare module "@auth/core/jwt" {
+// Extended JWT type - use next-auth module for JWT augmentation
+declare module "next-auth" {
   interface JWT {
     id: string
     role: Role
@@ -101,9 +101,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id
-        session.user.role = token.role
-        session.user.locationIds = token.locationIds
+        session.user.id = token.id as string
+        session.user.role = token.role as Role
+        session.user.locationIds = token.locationIds as string[]
       }
       return session
     },

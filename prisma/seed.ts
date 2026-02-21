@@ -240,6 +240,9 @@ async function main() {
           create: data.certifications.map((locationId) => ({ locationId })),
         },
       },
+      include: {
+        certifications: true,
+      },
     })
     staff.push(user)
   }

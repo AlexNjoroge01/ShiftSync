@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { createUtcDateTime, isPremiumShift } from "@/lib/timezone"
+import type { Prisma } from "@prisma/client"
 
 const createShiftSchema = z.object({
   locationId: z.string().min(1, "Location is required"),
@@ -28,11 +29,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate")
     const isPublished = searchParams.get("isPublished")
 
-    const where: {
-      locationId?: string
-      startTimeUtc?: { gte?: Date; lte?: Date }
-      isPublished?: boolean
-    } = {}
+    const where: Prisma.ShiftWhereInput = {}
 
     // Filter by location access
     if (session.user.role === "MANAGER") {
@@ -40,7 +37,7 @@ export async function GET(request: NextRequest) {
         where: { managerId: session.user.id },
         select: { locationId: true },
       })
-      const locationIds = managerLocations.map((l) => l.locationId)
+      const locationIds = managerLocations.map((l: { locationId: string }) => l.locationId)
       
       if (locationId && !locationIds.includes(locationId)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
@@ -54,7 +51,7 @@ export async function GET(request: NextRequest) {
         where: { userId: session.user.id, revokedAt: null },
         select: { locationId: true },
       })
-      const locationIds = certifications.map((c) => c.locationId)
+      const locationIds = certifications.map((c: { locationId: string }) => c.locationId)
       where.locationId = locationId && locationIds.includes(locationId) ? locationId : { in: locationIds }
     } else if (locationId) {
       where.locationId = locationId
@@ -193,7 +190,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating shift:", error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       )
     }
