@@ -6,12 +6,12 @@ import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { loginSchema, type LoginInput } from "@/types"
+import Link from "next/link"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -56,65 +56,97 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="border-slate-700 bg-slate-800/50 backdrop-blur">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold text-white">ShiftSync</CardTitle>
-        <CardDescription className="text-slate-400">
-          Multi-Location Staff Scheduling Platform
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-slate-200">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              className="border-slate-600 bg-slate-700/50 text-white placeholder:text-slate-400"
-              {...register("email")}
-              disabled={isLoading}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-400">{errors.email.message}</p>
-            )}
-          </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="space-y-2">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to home
+        </Link>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          Welcome back
+        </h1>
+        <p className="text-slate-500">
+          Sign in to your account to continue
+        </p>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-slate-200">
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+            Email address
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            className="h-12 border-slate-200 focus:border-slate-900 focus:ring-slate-900"
+            {...register("email")}
+            disabled={isLoading}
+          />
+          {errors.email && (
+            <p className="text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium text-slate-700">
               Password
             </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              className="border-slate-600 bg-slate-700/50 text-white placeholder:text-slate-400"
-              {...register("password")}
-              disabled={isLoading}
-            />
-            {errors.password && (
-              <p className="text-sm text-red-400">{errors.password.message}</p>
-            )}
           </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700"
+          <Input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            className="h-12 border-slate-200 focus:border-slate-900 focus:ring-slate-900"
+            {...register("password")}
             disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              "Sign in"
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+          />
+          {errors.password && (
+            <p className="text-sm text-red-500">{errors.password.message}</p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-base font-medium"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign in"
+          )}
+        </Button>
+      </form>
+
+      {/* Demo credentials */}
+      <div className="pt-6 border-t border-slate-100">
+        <p className="text-sm text-slate-500 mb-3">Demo credentials:</p>
+        <div className="grid gap-2 text-sm">
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <span className="text-slate-600">Admin</span>
+            <code className="text-xs bg-slate-200 px-2 py-1 rounded">admin@coastaleats.com</code>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <span className="text-slate-600">Manager</span>
+            <code className="text-xs bg-slate-200 px-2 py-1 rounded">manager@coastaleats.com</code>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <span className="text-slate-600">Staff</span>
+            <code className="text-xs bg-slate-200 px-2 py-1 rounded">staff@coastaleats.com</code>
+          </div>
+        </div>
+        <p className="text-xs text-slate-400 mt-3">Password for all accounts: <code className="bg-slate-100 px-1 rounded">password123</code></p>
+      </div>
+    </div>
   )
 }

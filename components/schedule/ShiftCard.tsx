@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { Users, Clock, MapPin } from "lucide-react"
+import { Users, Clock } from "lucide-react"
 import { formatInTimezone, isOvernightShift } from "@/lib/timezone"
 import type { ShiftWithDetails } from "@/types"
 import { OvernightShiftBadge } from "./OvernightShiftBadge"
@@ -28,19 +28,19 @@ export function ShiftCard({ shift, onClick, compact = false }: ShiftCardProps) {
 
   return (
     <Card
-      className={`p-2 cursor-pointer transition-all hover:ring-2 hover:ring-blue-500 ${
+      className={`p-3 cursor-pointer transition-all hover:shadow-md border ${
         shift.isPremium
-          ? "bg-gradient-to-r from-amber-900/30 to-orange-900/30 border-amber-600/50"
+          ? "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 hover:border-amber-300"
           : shift.isPublished
-          ? "bg-slate-700/50 border-slate-600"
-          : "bg-slate-800/50 border-slate-700 border-dashed"
+          ? "bg-white border-slate-200 hover:border-slate-300"
+          : "bg-slate-50 border-slate-200 border-dashed hover:border-slate-300"
       }`}
       onClick={onClick}
     >
       {/* Time */}
-      <div className="flex items-center gap-1 text-xs text-slate-300 mb-1">
-        <Clock className="h-3 w-3" />
-        <span>
+      <div className="flex items-center gap-1.5 text-xs text-slate-600 mb-2">
+        <Clock className="h-3.5 w-3.5" />
+        <span className="font-medium">
           {formatInTimezone(shift.startTimeUtc, shift.location.timezone, "h:mm a")}
           {" - "}
           {formatInTimezone(shift.endTimeUtc, shift.location.timezone, "h:mm a")}
@@ -52,7 +52,7 @@ export function ShiftCard({ shift, onClick, compact = false }: ShiftCardProps) {
       {shift.requiredSkill && !compact && (
         <Badge
           variant="outline"
-          className="text-xs border-blue-500/50 text-blue-400 mb-1"
+          className="text-xs border-blue-200 text-blue-600 bg-blue-50 mb-2"
         >
           {shift.requiredSkill.name}
         </Badge>
@@ -60,36 +60,38 @@ export function ShiftCard({ shift, onClick, compact = false }: ShiftCardProps) {
 
       {/* Staffing */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <Users className="h-3 w-3 text-slate-400" />
+        <div className="flex items-center gap-1.5">
+          <Users className="h-3.5 w-3.5 text-slate-400" />
           <span
-            className={`text-xs ${
-              isFullyStaffed ? "text-green-400" : "text-yellow-400"
+            className={`text-xs font-medium ${
+              isFullyStaffed ? "text-green-600" : "text-yellow-600"
             }`}
           >
             {assignedCount}/{shift.headcount}
           </span>
         </div>
 
-        {shift.isPremium && (
-          <Badge className="text-xs bg-amber-600 text-white">Premium</Badge>
-        )}
+        <div className="flex items-center gap-1.5">
+          {shift.isPremium && (
+            <Badge className="text-xs bg-amber-100 text-amber-700 border-amber-200">Premium</Badge>
+          )}
 
-        {!shift.isPublished && (
-          <Badge className="text-xs bg-slate-600 text-slate-300">Draft</Badge>
-        )}
+          {!shift.isPublished && (
+            <Badge className="text-xs bg-slate-100 text-slate-600 border-slate-200">Draft</Badge>
+          )}
+        </div>
       </div>
 
       {/* Assigned staff names (if not compact) */}
       {!compact && shift.assignments.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-slate-600">
-          <div className="flex flex-wrap gap-1">
+        <div className="mt-3 pt-3 border-t border-slate-100">
+          <div className="flex flex-wrap gap-1.5">
             {shift.assignments
               .filter((a) => a.status === "ASSIGNED")
               .map((assignment) => (
                 <span
                   key={assignment.id}
-                  className="text-xs text-slate-300 bg-slate-600/50 px-1.5 py-0.5 rounded"
+                  className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded-md"
                 >
                   {assignment.user.name}
                 </span>

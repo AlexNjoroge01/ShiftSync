@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Clock, ArrowLeftRight, CheckCircle } from "lucide-react"
+import { Calendar, Clock, ArrowLeftRight, CheckCircle, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 export default async function StaffPage() {
   const session = await auth()
@@ -68,76 +69,83 @@ export default async function StaffPage() {
   }, 0)
 
   const stats = [
-    { label: "This Week Hours", value: Math.round(weeklyHours), icon: Clock, color: "text-blue-500" },
-    { label: "Upcoming Shifts", value: upcomingShifts.length, icon: Calendar, color: "text-green-500" },
-    { label: "Pending Swaps", value: pendingSwaps, icon: ArrowLeftRight, color: "text-yellow-500" },
+    { label: "This Week Hours", value: Math.round(weeklyHours), icon: Clock, color: "bg-blue-50 text-blue-600" },
+    { label: "Upcoming Shifts", value: upcomingShifts.length, icon: Calendar, color: "bg-green-50 text-green-600" },
+    { label: "Pending Swaps", value: pendingSwaps, icon: ArrowLeftRight, color: "bg-yellow-50 text-yellow-600" },
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">Staff Dashboard</h1>
-        <p className="text-slate-400 mt-1">View your schedule and manage availability</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Staff Dashboard</h1>
+        <p className="text-slate-500 mt-1">View your schedule and manage availability</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Card key={stat.label} className="bg-slate-800 border-slate-700">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-400">
-                  {stat.label}
-                </CardTitle>
-                <Icon className={`h-5 w-5 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">{stat.value}</div>
+            <Card key={stat.label} className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                    <p className="text-3xl font-bold text-slate-900 mt-1">{stat.value}</p>
+                  </div>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )
         })}
       </div>
 
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white">Upcoming Shifts</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardTitle className="text-slate-900">Upcoming Shifts</CardTitle>
+          <CardDescription className="text-slate-500">
             Your next scheduled shifts
           </CardDescription>
         </CardHeader>
         <CardContent>
           {upcomingShifts.length === 0 ? (
-            <p className="text-slate-400 text-center py-8">No upcoming shifts scheduled</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-8 w-8 text-slate-400" />
+              </div>
+              <p className="text-slate-500">No upcoming shifts scheduled</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {upcomingShifts.map((assignment) => (
                 <div
                   key={assignment.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-slate-700/50"
+                  className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-blue-600/20 flex items-center justify-center">
-                      <Calendar className="h-5 w-5 text-blue-500" />
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                      <Calendar className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-white">
+                      <p className="font-medium text-slate-900">
                         {assignment.shift.location.name}
                       </p>
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-slate-500">
                         {assignment.shift.requiredSkill?.name || "General"}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-white">
+                    <p className="text-sm font-medium text-slate-900">
                       {assignment.shift.date.toLocaleDateString("en-US", {
                         weekday: "short",
                         month: "short",
                         day: "numeric",
                       })}
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-500">
                       {assignment.shift.startTimeUtc.toLocaleTimeString("en-US", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -158,31 +166,37 @@ export default async function StaffPage() {
         </CardContent>
       </Card>
 
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white">Quick Actions</CardTitle>
+          <CardTitle className="text-slate-900">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <a
+          <Link
             href="/staff/availability"
-            className="flex items-center gap-3 p-4 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+            className="group flex items-center gap-4 p-5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
           >
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <div>
-              <p className="font-medium text-white">Set Availability</p>
-              <p className="text-sm text-slate-400">Update when you can work</p>
+            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+              <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
-          </a>
-          <a
+            <div className="flex-1">
+              <p className="font-medium text-slate-900">Set Availability</p>
+              <p className="text-sm text-slate-500">Update when you can work</p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+          </Link>
+          <Link
             href="/staff/swaps"
-            className="flex items-center gap-3 p-4 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+            className="group flex items-center gap-4 p-5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
           >
-            <ArrowLeftRight className="h-5 w-5 text-yellow-500" />
-            <div>
-              <p className="font-medium text-white">Request Swap</p>
-              <p className="text-sm text-slate-400">Swap or drop a shift</p>
+            <div className="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center">
+              <ArrowLeftRight className="h-6 w-6 text-yellow-600" />
             </div>
-          </a>
+            <div className="flex-1">
+              <p className="font-medium text-slate-900">Request Swap</p>
+              <p className="text-sm text-slate-500">Swap or drop a shift</p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+          </Link>
         </CardContent>
       </Card>
     </div>

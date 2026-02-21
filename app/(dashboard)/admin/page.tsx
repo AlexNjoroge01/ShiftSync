@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Building2, Calendar, Shield } from "lucide-react"
+import { Users, Building2, Calendar, Shield, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -15,76 +16,87 @@ export default async function AdminPage() {
   ])
 
   const stats = [
-    { label: "Total Users", value: userCount, icon: Users, color: "text-blue-500" },
-    { label: "Locations", value: locationCount, icon: Building2, color: "text-green-500" },
-    { label: "Total Shifts", value: shiftCount, icon: Calendar, color: "text-purple-500" },
-    { label: "Audit Logs", value: auditCount, icon: Shield, color: "text-orange-500" },
+    { label: "Total Users", value: userCount, icon: Users, color: "bg-blue-50 text-blue-600" },
+    { label: "Locations", value: locationCount, icon: Building2, color: "bg-green-50 text-green-600" },
+    { label: "Total Shifts", value: shiftCount, icon: Calendar, color: "bg-purple-50 text-purple-600" },
+    { label: "Audit Logs", value: auditCount, icon: Shield, color: "bg-orange-50 text-orange-600" },
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-        <p className="text-slate-400 mt-1">Manage users, locations, and system settings</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Admin Dashboard</h1>
+        <p className="text-slate-500 mt-1">Manage users, locations, and system settings</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Card key={stat.label} className="bg-slate-800 border-slate-700">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-400">
-                  {stat.label}
-                </CardTitle>
-                <Icon className={`h-5 w-5 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">{stat.value}</div>
+            <Card key={stat.label} className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                    <p className="text-3xl font-bold text-slate-900 mt-1">{stat.value}</p>
+                  </div>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )
         })}
       </div>
 
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white">Quick Actions</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardTitle className="text-slate-900">Quick Actions</CardTitle>
+          <CardDescription className="text-slate-500">
             Common administrative tasks
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
-          <a
+          <Link
             href="/admin/users"
-            className="flex items-center gap-3 p-4 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+            className="group flex items-center gap-4 p-5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
           >
-            <Users className="h-5 w-5 text-blue-500" />
-            <div>
-              <p className="font-medium text-white">Manage Users</p>
-              <p className="text-sm text-slate-400">Create, edit, or deactivate users</p>
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Users className="h-6 w-6 text-blue-600" />
             </div>
-          </a>
-          <a
+            <div className="flex-1">
+              <p className="font-medium text-slate-900">Manage Users</p>
+              <p className="text-sm text-slate-500">Create, edit, or deactivate users</p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+          </Link>
+          <Link
             href="/admin/locations"
-            className="flex items-center gap-3 p-4 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+            className="group flex items-center gap-4 p-5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
           >
-            <Building2 className="h-5 w-5 text-green-500" />
-            <div>
-              <p className="font-medium text-white">Manage Locations</p>
-              <p className="text-sm text-slate-400">Add or edit restaurant locations</p>
+            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+              <Building2 className="h-6 w-6 text-green-600" />
             </div>
-          </a>
-          <a
+            <div className="flex-1">
+              <p className="font-medium text-slate-900">Manage Locations</p>
+              <p className="text-sm text-slate-500">Add or edit restaurant locations</p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+          </Link>
+          <Link
             href="/admin/audit"
-            className="flex items-center gap-3 p-4 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+            className="group flex items-center gap-4 p-5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
           >
-            <Shield className="h-5 w-5 text-orange-500" />
-            <div>
-              <p className="font-medium text-white">View Audit Log</p>
-              <p className="text-sm text-slate-400">Track all system changes</p>
+            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
+              <Shield className="h-6 w-6 text-orange-600" />
             </div>
-          </a>
+            <div className="flex-1">
+              <p className="font-medium text-slate-900">View Audit Log</p>
+              <p className="text-sm text-slate-500">Track all system changes</p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+          </Link>
         </CardContent>
       </Card>
     </div>

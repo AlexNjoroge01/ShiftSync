@@ -1,14 +1,20 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Users, Plus, Edit, Shield, UserCog, User } from "lucide-react"
 
 const roleColors = {
-  ADMIN: "bg-red-500/10 text-red-400 border-red-500/20",
-  MANAGER: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  STAFF: "bg-green-500/10 text-green-400 border-green-500/20",
+  ADMIN: "bg-red-50 text-red-600 border-red-100",
+  MANAGER: "bg-blue-50 text-blue-600 border-blue-100",
+  STAFF: "bg-green-50 text-green-600 border-green-100",
+}
+
+const roleIconColors = {
+  ADMIN: "bg-red-100 text-red-600",
+  MANAGER: "bg-blue-100 text-blue-600",
+  STAFF: "bg-green-100 text-green-600",
 }
 
 const roleIcons = {
@@ -46,13 +52,13 @@ export default async function AdminUsersPage() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">User Management</h1>
-          <p className="text-slate-400 mt-1">Create and manage user accounts</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">User Management</h1>
+          <p className="text-slate-500 mt-1">Create and manage user accounts</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-6">
           <Plus className="h-4 w-4 mr-2" />
           Add User
         </Button>
@@ -62,29 +68,29 @@ export default async function AdminUsersPage() {
         {users.map((user) => {
           const RoleIcon = roleIcons[user.role]
           return (
-            <Card key={user.id} className="bg-slate-800 border-slate-700">
+            <Card key={user.id} className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-full bg-slate-700 flex items-center justify-center">
-                      <RoleIcon className="h-6 w-6 text-slate-400" />
+                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${roleIconColors[user.role]}`}>
+                      <RoleIcon className="h-6 w-6" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold text-white">{user.name}</h3>
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-lg font-semibold text-slate-900">{user.name}</h3>
                         <Badge className={roleColors[user.role]}>
                           {user.role}
                         </Badge>
                       </div>
-                      <p className="text-slate-400 text-sm">{user.email}</p>
+                      <p className="text-slate-500 text-sm">{user.email}</p>
                       
                       {/* Manager locations */}
                       {user.role === "MANAGER" && user.managedLocations.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-xs text-slate-500 mb-1">Manages:</p>
-                          <div className="flex flex-wrap gap-1">
+                        <div className="mt-3">
+                          <p className="text-xs text-slate-500 mb-1.5 font-medium">Manages:</p>
+                          <div className="flex flex-wrap gap-1.5">
                             {user.managedLocations.map((ml) => (
-                              <Badge key={ml.id} variant="outline" className="text-xs border-slate-600 text-slate-300">
+                              <Badge key={ml.id} variant="outline" className="text-xs border-slate-200 text-slate-600 bg-slate-50">
                                 {ml.location.name}
                               </Badge>
                             ))}
@@ -94,11 +100,11 @@ export default async function AdminUsersPage() {
 
                       {/* Staff certifications */}
                       {user.role === "STAFF" && user.certifications.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-xs text-slate-500 mb-1">Certified at:</p>
-                          <div className="flex flex-wrap gap-1">
+                        <div className="mt-3">
+                          <p className="text-xs text-slate-500 mb-1.5 font-medium">Certified at:</p>
+                          <div className="flex flex-wrap gap-1.5">
                             {user.certifications.map((cert) => (
-                              <Badge key={cert.id} variant="outline" className="text-xs border-slate-600 text-slate-300">
+                              <Badge key={cert.id} variant="outline" className="text-xs border-slate-200 text-slate-600 bg-slate-50">
                                 {cert.location.name}
                               </Badge>
                             ))}
@@ -108,11 +114,11 @@ export default async function AdminUsersPage() {
 
                       {/* Staff skills */}
                       {user.role === "STAFF" && user.skills.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-xs text-slate-500 mb-1">Skills:</p>
-                          <div className="flex flex-wrap gap-1">
+                        <div className="mt-3">
+                          <p className="text-xs text-slate-500 mb-1.5 font-medium">Skills:</p>
+                          <div className="flex flex-wrap gap-1.5">
                             {user.skills.map((skill) => (
-                              <Badge key={skill.skillId} variant="outline" className="text-xs border-blue-600/50 text-blue-400">
+                              <Badge key={skill.skillId} variant="outline" className="text-xs border-blue-200 text-blue-600 bg-blue-50">
                                 {skill.skill.name}
                               </Badge>
                             ))}
@@ -121,13 +127,13 @@ export default async function AdminUsersPage() {
                       )}
 
                       {user.desiredHoursPerWeek && (
-                        <p className="text-xs text-slate-500 mt-2">
-                          Desired hours: {user.desiredHoursPerWeek}h/week
+                        <p className="text-xs text-slate-500 mt-3">
+                          Desired hours: <span className="font-medium text-slate-700">{user.desiredHoursPerWeek}h/week</span>
                         </p>
                       )}
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                  <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full">
                     <Edit className="h-4 w-4" />
                   </Button>
                 </div>
@@ -137,11 +143,13 @@ export default async function AdminUsersPage() {
         })}
 
         {users.length === 0 && (
-          <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="h-12 w-12 text-slate-600 mb-4" />
-              <p className="text-slate-400">No users found</p>
-              <p className="text-slate-500 text-sm">Add your first user to get started</p>
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-slate-400" />
+              </div>
+              <p className="text-slate-600 font-medium">No users found</p>
+              <p className="text-slate-400 text-sm mt-1">Add your first user to get started</p>
             </CardContent>
           </Card>
         )}

@@ -24,11 +24,11 @@ export default function DashboardLayout({
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
-        <div className="flex h-screen bg-slate-900">
+        <div className="flex h-screen bg-slate-50">
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header />
-            <main className="flex-1 overflow-auto p-6">
+            <main className="flex-1 overflow-auto p-8">
               {children}
             </main>
           </div>

@@ -18,11 +18,11 @@ interface SwapRequestCardProps {
 }
 
 const statusColors = {
-  PENDING: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-  STAFF_ACCEPTED: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  MANAGER_APPROVED: "bg-green-500/10 text-green-400 border-green-500/20",
-  CANCELLED: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-  EXPIRED: "bg-red-500/10 text-red-400 border-red-500/20",
+  PENDING: "bg-yellow-50 text-yellow-600 border-yellow-200",
+  STAFF_ACCEPTED: "bg-blue-50 text-blue-600 border-blue-200",
+  MANAGER_APPROVED: "bg-green-50 text-green-600 border-green-200",
+  CANCELLED: "bg-slate-50 text-slate-500 border-slate-200",
+  EXPIRED: "bg-red-50 text-red-600 border-red-200",
 }
 
 export function SwapRequestCard({
@@ -42,13 +42,13 @@ export function SwapRequestCard({
   const canCancel = isPending && userRole === "STAFF"
 
   return (
-    <Card className="bg-slate-800 border-slate-700">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
+    <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
-              className={isDrop ? "border-orange-500/50 text-orange-400" : "border-blue-500/50 text-blue-400"}
+              className={isDrop ? "border-orange-200 text-orange-600 bg-orange-50" : "border-blue-200 text-blue-600 bg-blue-50"}
             >
               {swapRequest.type}
             </Badge>
@@ -57,22 +57,26 @@ export function SwapRequestCard({
             </Badge>
           </div>
           {swapRequest.expiresAt && isPending && (
-            <div className="flex items-center gap-1 text-xs text-slate-400">
-              <Clock className="h-3 w-3" />
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Clock className="h-3.5 w-3.5" />
               Expires: {new Date(swapRequest.expiresAt).toLocaleDateString()}
             </div>
           )}
         </div>
 
         {/* Shift details */}
-        <div className="space-y-2 mb-3">
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="h-4 w-4 text-slate-500" />
-            <span className="text-white">{swapRequest.shift.location.name}</span>
+        <div className="space-y-2.5 mb-4">
+          <div className="flex items-center gap-2.5 text-sm">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+              <MapPin className="h-4 w-4 text-slate-500" />
+            </div>
+            <span className="text-slate-900 font-medium">{swapRequest.shift.location.name}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-slate-500" />
-            <span className="text-slate-300">
+          <div className="flex items-center gap-2.5 text-sm">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-slate-500" />
+            </div>
+            <span className="text-slate-600">
               {formatInTimezone(
                 swapRequest.shift.startTimeUtc,
                 swapRequest.shift.location.timezone,
@@ -89,38 +93,40 @@ export function SwapRequestCard({
         </div>
 
         {/* Requester info */}
-        <div className="flex items-center gap-2 text-sm mb-3">
-          <User className="h-4 w-4 text-slate-500" />
-          <span className="text-slate-400">Requested by:</span>
-          <span className="text-white">{swapRequest.requester.name}</span>
+        <div className="flex items-center gap-2.5 text-sm mb-4">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+            <User className="h-4 w-4 text-slate-500" />
+          </div>
+          <span className="text-slate-500">Requested by:</span>
+          <span className="text-slate-900 font-medium">{swapRequest.requester.name}</span>
         </div>
 
         {/* SWAP type: show target user */}
         {!isDrop && swapRequest.targetUser && (
-          <div className="flex items-center gap-2 text-sm mb-3 p-2 bg-slate-700/50 rounded">
-            <ArrowRight className="h-4 w-4 text-blue-500" />
-            <span className="text-slate-400">Swap with:</span>
-            <span className="text-white">{swapRequest.targetUser.name}</span>
+          <div className="flex items-center gap-2.5 text-sm mb-4 p-3 bg-blue-50 rounded-xl border border-blue-100">
+            <ArrowRight className="h-4 w-4 text-blue-600" />
+            <span className="text-slate-600">Swap with:</span>
+            <span className="text-slate-900 font-medium">{swapRequest.targetUser.name}</span>
           </div>
         )}
 
         {/* DROP type: show claim button for qualified staff */}
         {isDrop && isPending && (
-          <div className="p-2 bg-orange-900/20 border border-orange-700/50 rounded mb-3">
-            <div className="flex items-center gap-2 text-sm text-orange-300">
+          <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl mb-4">
+            <div className="flex items-center gap-2 text-sm text-orange-700">
               <AlertCircle className="h-4 w-4" />
-              <span>Looking for coverage</span>
+              <span className="font-medium">Looking for coverage</span>
             </div>
           </div>
         )}
 
         {/* Actions */}
         {showActions && (
-          <div className="flex gap-2 pt-2 border-t border-slate-700">
+          <div className="flex gap-2 pt-4 border-t border-slate-100">
             {canStaffAccept && onAccept && (
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-5"
                 onClick={() => onAccept(swapRequest.id)}
               >
                 <Check className="h-4 w-4 mr-1" />
@@ -130,7 +136,7 @@ export function SwapRequestCard({
             {canManagerApprove && onApprove && (
               <Button
                 size="sm"
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 text-white rounded-full px-5"
                 onClick={() => onApprove(swapRequest.id)}
               >
                 <Check className="h-4 w-4 mr-1" />
@@ -141,7 +147,7 @@ export function SwapRequestCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="border-red-600/50 text-red-400 hover:bg-red-900/20"
+                className="border-red-200 text-red-600 hover:bg-red-50 rounded-full px-5"
                 onClick={() => onReject(swapRequest.id)}
               >
                 <X className="h-4 w-4 mr-1" />
@@ -152,7 +158,7 @@ export function SwapRequestCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="border-slate-600 text-slate-300"
+                className="border-slate-200 text-slate-600 hover:bg-slate-50 rounded-full px-5"
                 onClick={() => onCancel(swapRequest.id)}
               >
                 Cancel Request

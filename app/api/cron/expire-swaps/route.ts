@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
+// Force Node.js runtime (Prisma requires Node.js crypto module)
+export const runtime = "nodejs"
+
 // GET /api/cron/expire-swaps - Expire pending swap requests past their expiry time
 // This endpoint is called by Vercel Cron Jobs every hour
 export async function GET(request: Request) {
@@ -32,9 +35,9 @@ export async function GET(request: Request) {
     })
 
     // Update all expired requests
-    const updatePromises = expiredRequests.map((request) =>
+    const updatePromises = expiredRequests.map((expiredRequest) =>
       prisma.swapRequest.update({
-        where: { id: request.id },
+        where: { id: expiredRequest.id },
         data: {
           status: "EXPIRED",
           cancelledReason: "Expired - no action taken before deadline",
@@ -45,16 +48,16 @@ export async function GET(request: Request) {
     await Promise.all(updatePromises)
 
     // Create notifications for each expired request
-    const notificationPromises = expiredRequests.map((request) =>
+    const notificationPromises = expiredRequests.map((expiredRequest) =>
       prisma.notification.create({
         data: {
-          userId: request.requesterId,
+          userId: expiredRequest.requesterId,
           type: "SWAP_EXPIRED",
           title: "Swap Request Expired",
-          message: `Your ${request.type.toLowerCase()} request for the shift at ${request.shift.location.name} has expired.`,
+          message: `Your ${expiredRequest.type.toLowerCase()} request for the shift at ${expiredRequest.shift.location.name} has expired.`,
           meta: {
-            swapRequestId: request.id,
-            shiftId: request.shiftId,
+            swapRequestId: expiredRequest.id,
+            shiftId: expiredRequest.shiftId,
           },
         },
       })

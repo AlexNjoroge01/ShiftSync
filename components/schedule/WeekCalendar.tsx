@@ -3,7 +3,6 @@
 import { useMemo } from "react"
 import { format, addDays, startOfWeek, isSameDay } from "date-fns"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { ShiftCard } from "./ShiftCard"
 import type { ShiftWithDetails } from "@/types"
 
@@ -45,28 +44,28 @@ export function WeekCalendar({ shifts, currentDate, onShiftClick }: WeekCalendar
     <div className="overflow-x-auto">
       <div className="min-w-[900px]">
         {/* Header */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
+        <div className="grid grid-cols-7 gap-3 mb-4">
           {weekDays.map((day, index) => {
             const isToday = isSameDay(day, new Date())
             return (
               <div
                 key={index}
-                className={`text-center p-3 rounded-lg ${
+                className={`text-center p-4 rounded-xl transition-colors ${
                   isToday
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-800 text-slate-300"
+                    ? "bg-slate-900 text-white"
+                    : "bg-white border border-slate-200 text-slate-600"
                 }`}
               >
-                <div className="text-xs font-medium">{DAYS[index]}</div>
-                <div className="text-lg font-bold">{format(day, "d")}</div>
-                <div className="text-xs">{format(day, "MMM")}</div>
+                <div className="text-xs font-medium uppercase tracking-wide">{DAYS[index]}</div>
+                <div className="text-2xl font-bold mt-1">{format(day, "d")}</div>
+                <div className="text-xs mt-0.5">{format(day, "MMM")}</div>
               </div>
             )
           })}
         </div>
 
         {/* Shifts Grid */}
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-3">
           {weekDays.map((day, index) => {
             const dayStr = format(day, "yyyy-MM-dd")
             const dayShifts = shiftsByDay.get(dayStr) || []
@@ -75,15 +74,15 @@ export function WeekCalendar({ shifts, currentDate, onShiftClick }: WeekCalendar
             return (
               <Card
                 key={index}
-                className={`min-h-[200px] p-2 ${
+                className={`min-h-[200px] p-3 transition-colors ${
                   isToday
-                    ? "bg-blue-950/30 border-blue-700"
-                    : "bg-slate-800/50 border-slate-700"
+                    ? "bg-blue-50 border-blue-200"
+                    : "bg-white border-slate-200"
                 }`}
               >
                 <div className="space-y-2">
                   {dayShifts.length === 0 ? (
-                    <div className="text-center text-slate-500 text-sm py-8">
+                    <div className="text-center text-slate-400 text-sm py-8">
                       No shifts
                     </div>
                   ) : (

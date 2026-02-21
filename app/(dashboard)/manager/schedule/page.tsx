@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, ChevronLeft, ChevronRight, Plus, Send } from "lucide-react"
@@ -61,21 +61,21 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
   const nextWeek = addWeeks(currentDate, 1)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Schedule</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Schedule</h1>
+          <p className="text-slate-500 mt-1">
             Week of {format(weekStart, "MMM d, yyyy")}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-slate-600 text-slate-300">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-100 rounded-full px-5">
             <Plus className="h-4 w-4 mr-2" />
             Add Shift
           </Button>
           {hasUnpublishedShifts && (
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button className="bg-green-600 hover:bg-green-700 text-white rounded-full px-5">
               <Send className="h-4 w-4 mr-2" />
               Publish Week
             </Button>
@@ -93,10 +93,10 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
             >
               <Badge
                 variant={selectedLocationId === ml.locationId ? "default" : "outline"}
-                className={`cursor-pointer ${
+                className={`cursor-pointer px-4 py-1.5 rounded-full transition-colors ${
                   selectedLocationId === ml.locationId
-                    ? "bg-blue-600"
-                    : "border-slate-600 text-slate-300"
+                    ? "bg-slate-900 text-white hover:bg-slate-800"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 {ml.location.name}
@@ -107,25 +107,27 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
       )}
 
       {/* Week navigation */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardContent className="flex items-center justify-between py-4">
           <a
             href={`/manager/schedule?${selectedLocationId ? `location=${selectedLocationId}&` : ""}date=${format(prevWeek, "yyyy-MM-dd")}`}
           >
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full">
               <ChevronLeft className="h-5 w-5" />
             </Button>
           </a>
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-500" />
-            <span className="text-white font-medium">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-blue-600" />
+            </div>
+            <span className="text-slate-900 font-medium">
               {format(weekStart, "MMM d")} - {format(new Date(weekEnd.setDate(weekEnd.getDate() - 1)), "MMM d, yyyy")}
             </span>
           </div>
           <a
             href={`/manager/schedule?${selectedLocationId ? `location=${selectedLocationId}&` : ""}date=${format(nextWeek, "yyyy-MM-dd")}`}
           >
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full">
               <ChevronRight className="h-5 w-5" />
             </Button>
           </a>
@@ -136,35 +138,35 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
       <WeekCalendar shifts={shifts} currentDate={currentDate} />
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="bg-slate-800 border-slate-700">
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-white">{shifts.length}</div>
-            <p className="text-slate-400 text-sm">Total Shifts</p>
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <p className="text-3xl font-bold text-slate-900">{shifts.length}</p>
+            <p className="text-slate-500 text-sm mt-1">Total Shifts</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800 border-slate-700">
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-400">
+        <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <p className="text-3xl font-bold text-green-600">
               {shifts.filter((s) => s.isPublished).length}
-            </div>
-            <p className="text-slate-400 text-sm">Published</p>
+            </p>
+            <p className="text-slate-500 text-sm mt-1">Published</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800 border-slate-700">
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-yellow-400">
+        <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <p className="text-3xl font-bold text-yellow-600">
               {shifts.filter((s) => !s.isPublished).length}
-            </div>
-            <p className="text-slate-400 text-sm">Drafts</p>
+            </p>
+            <p className="text-slate-500 text-sm mt-1">Drafts</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800 border-slate-700">
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-amber-400">
+        <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <p className="text-3xl font-bold text-amber-600">
               {shifts.filter((s) => s.isPremium).length}
-            </div>
-            <p className="text-slate-400 text-sm">Premium Shifts</p>
+            </p>
+            <p className="text-slate-500 text-sm mt-1">Premium Shifts</p>
           </CardContent>
         </Card>
       </div>
