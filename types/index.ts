@@ -103,6 +103,7 @@ export interface SwapRequestWithDetails {
     location: {
       id: string
       name: string
+      timezone: string
     }
   }
   shiftAssignmentId: string

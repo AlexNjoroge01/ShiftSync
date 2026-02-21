@@ -3,8 +3,10 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Clock, MapPin, User, Check, X, AlertCircle } from "lucide-react"
+import { ArrowRight, Clock, MapPin, User, Check, X, AlertCircle, Loader2 } from "lucide-react"
 import { formatInTimezone } from "@/lib/timezone"
+import { toast } from "sonner"
+import { useState } from "react"
 import type { SwapRequestWithDetails } from "@/types"
 
 interface SwapRequestCardProps {
@@ -34,12 +36,65 @@ export function SwapRequestCard({
   showActions = false,
   userRole,
 }: SwapRequestCardProps) {
+  const [isLoading, setIsLoading] = useState(false)
   const isDrop = swapRequest.type === "DROP"
   const isPending = swapRequest.status === "PENDING"
   const isStaffAccepted = swapRequest.status === "STAFF_ACCEPTED"
   const canStaffAccept = isPending && isDrop && userRole === "STAFF"
   const canManagerApprove = (isPending || isStaffAccepted) && userRole === "MANAGER"
   const canCancel = isPending && userRole === "STAFF"
+
+  const handleAccept = async () => {
+    if (!onAccept) return
+    setIsLoading(true)
+    try {
+      await onAccept(swapRequest.id)
+      toast.success("Shift claimed successfully!")
+    } catch (error) {
+      toast.error("Failed to claim shift. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleApprove = async () => {
+    if (!onApprove) return
+    setIsLoading(true)
+    try {
+      await onApprove(swapRequest.id)
+      toast.success("Swap request approved!")
+    } catch (error) {
+      toast.error("Failed to approve swap request. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!onReject) return
+    setIsLoading(true)
+    try {
+      await onReject(swapRequest.id)
+      toast.success(userRole === "MANAGER" ? "Swap request rejected" : "Swap request cancelled")
+    } catch (error) {
+      toast.error("Failed to process request. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCancel = async () => {
+    if (!onCancel) return
+    setIsLoading(true)
+    try {
+      await onCancel(swapRequest.id)
+      toast.success("Swap request cancelled")
+    } catch (error) {
+      toast.error("Failed to cancel request. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
@@ -127,9 +182,10 @@ export function SwapRequestCard({
               <Button
                 size="sm"
                 className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-5"
-                onClick={() => onAccept(swapRequest.id)}
+                onClick={handleAccept}
+                disabled={isLoading}
               >
-                <Check className="h-4 w-4 mr-1" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
                 Claim Shift
               </Button>
             )}
@@ -137,9 +193,10 @@ export function SwapRequestCard({
               <Button
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white rounded-full px-5"
-                onClick={() => onApprove(swapRequest.id)}
+                onClick={handleApprove}
+                disabled={isLoading}
               >
-                <Check className="h-4 w-4 mr-1" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
                 Approve
               </Button>
             )}
@@ -148,9 +205,10 @@ export function SwapRequestCard({
                 size="sm"
                 variant="outline"
                 className="border-red-200 text-red-600 hover:bg-red-50 rounded-full px-5"
-                onClick={() => onReject(swapRequest.id)}
+                onClick={handleReject}
+                disabled={isLoading}
               >
-                <X className="h-4 w-4 mr-1" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <X className="h-4 w-4 mr-1" />}
                 {userRole === "MANAGER" ? "Reject" : "Cancel"}
               </Button>
             )}
@@ -159,8 +217,10 @@ export function SwapRequestCard({
                 size="sm"
                 variant="outline"
                 className="border-slate-200 text-slate-600 hover:bg-slate-50 rounded-full px-5"
-                onClick={() => onCancel(swapRequest.id)}
+                onClick={handleCancel}
+                disabled={isLoading}
               >
+                {isLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
                 Cancel Request
               </Button>
             )}

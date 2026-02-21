@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
 
 interface HeaderProps {
   className?: string
@@ -83,7 +84,10 @@ export function Header({ className }: HeaderProps) {
             <DropdownMenuSeparator className="bg-slate-100" />
             <DropdownMenuItem
               className="text-slate-600 hover:text-slate-900 hover:bg-slate-50 cursor-pointer focus:bg-slate-50 focus:text-slate-900"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => {
+                toast.success("Signed out successfully")
+                signOut({ callbackUrl: "/login" })
+              }}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
