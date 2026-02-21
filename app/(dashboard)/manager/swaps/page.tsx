@@ -51,6 +51,7 @@ export default async function ManagerSwapsPage() {
                 select: {
                   id: true,
                   name: true,
+                  timezone: true,
                 },
               },
             },
@@ -65,6 +66,7 @@ export default async function ManagerSwapsPage() {
                 select: {
                   id: true,
                   name: true,
+                  timezone: true,
                 },
               },
             },

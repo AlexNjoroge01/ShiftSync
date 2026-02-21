@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Plus, Clock, Users, MapPin, Edit, Eye } from "lucide-react"
+import { Calendar, Clock, Users, MapPin, Edit, Eye } from "lucide-react"
+import { CreateShiftModal } from "@/components/shifts/CreateShiftModal"
 import type { Shift, Location } from "@prisma/client"
 
 type ShiftWithDetails = Shift & {
@@ -35,6 +36,17 @@ export default async function ManagerShiftsPage() {
   })
   
   const locationIds = managedLocations.map((l) => l.locationId)
+  
+  // Get locations for the modal
+  const locations = await prisma.location.findMany({
+    where: { id: { in: locationIds } },
+    select: { id: true, name: true, timezone: true },
+  })
+  
+  // Get skills for the modal
+  const skills = await prisma.skill.findMany({
+    select: { id: true, name: true },
+  })
   
   const shifts: ShiftWithDetails[] = await prisma.shift.findMany({
     where: {
@@ -93,10 +105,7 @@ export default async function ManagerShiftsPage() {
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Shift Management</h1>
           <p className="text-slate-500 mt-1">Create and manage shifts at your locations</p>
         </div>
-        <Button className="bg-slate-900 hover:bg-slate-800 text-white">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Shift
-        </Button>
+        <CreateShiftModal locations={locations} skills={skills} />
       </div>
 
       <div className="grid gap-4">

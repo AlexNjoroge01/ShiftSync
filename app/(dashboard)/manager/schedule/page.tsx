@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, ChevronLeft, ChevronRight, Plus, Send } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Send } from "lucide-react"
 import { WeekCalendar } from "@/components/schedule/WeekCalendar"
+import { CreateShiftModal } from "@/components/shifts/CreateShiftModal"
+import { PublishWeekButton } from "@/components/schedule/PublishWeekButton"
 import { format, startOfWeek, addWeeks, subWeeks } from "date-fns"
 
 interface SchedulePageProps {
@@ -30,6 +32,7 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
 
   // Get selected location or first location
   const selectedLocationId = params.location || locationIds[0] || null
+  const selectedLocation = managerLocations.find((ml) => ml.locationId === selectedLocationId)?.location
 
   // Get shifts for the week
   const shifts = await prisma.shift.findMany({
@@ -46,7 +49,7 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
       createdBy: { select: { id: true, name: true } },
       assignments: {
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: { select: { id: true, name: true, email: true, role: true } },
         },
       },
     },
@@ -55,10 +58,19 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
 
   // Check if any shifts are unpublished
   const hasUnpublishedShifts = shifts.some((s) => !s.isPublished)
+  const unpublishedShiftIds = shifts.filter((s) => !s.isPublished).map((s) => s.id)
 
   // Navigation dates
   const prevWeek = subWeeks(currentDate, 1)
   const nextWeek = addWeeks(currentDate, 1)
+
+  // Get skills for the modal
+  const skills = await prisma.skill.findMany({
+    select: { id: true, name: true },
+  })
+
+  // Get locations for the modal
+  const locations = managerLocations.map((ml) => ml.location)
 
   return (
     <div className="space-y-8">
@@ -70,15 +82,13 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-100 rounded-full px-5">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Shift
-          </Button>
-          {hasUnpublishedShifts && (
-            <Button className="bg-green-600 hover:bg-green-700 text-white rounded-full px-5">
-              <Send className="h-4 w-4 mr-2" />
-              Publish Week
-            </Button>
+          <CreateShiftModal locations={locations} skills={skills} />
+          {hasUnpublishedShifts && selectedLocationId && (
+            <PublishWeekButton
+              shiftIds={unpublishedShiftIds}
+              locationId={selectedLocationId}
+              weekStart={format(weekStart, "yyyy-MM-dd")}
+            />
           )}
         </div>
       </div>

@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Building2, Plus, Edit, MapPin, Users, Clock } from "lucide-react"
+import { Building2, Edit, MapPin, Users, Clock } from "lucide-react"
+import { AddLocationModal } from "@/components/locations/AddLocationModal"
 import type { Location, LocationAssignment, LocationCertification } from "@prisma/client"
 
 type LocationWithRelations = Location & {
@@ -68,10 +69,7 @@ export default async function AdminLocationsPage() {
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Location Management</h1>
           <p className="text-slate-500 mt-1">Manage restaurant locations</p>
         </div>
-        <Button className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-6">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Location
-        </Button>
+        <AddLocationModal />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

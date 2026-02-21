@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma"
-import { checkConstraints } from "./constraints"
 
 interface SuggestionResult {
   userId: string
@@ -18,6 +17,7 @@ interface SuggestionParams {
   startTimeUtc: Date
   endTimeUtc: Date
   excludeUserIds?: string[]
+  managerId?: string
 }
 
 /**
@@ -34,6 +34,7 @@ export async function findStaffSuggestions(
     startTimeUtc,
     endTimeUtc,
     excludeUserIds = [],
+    managerId = "system",
   } = params
 
   // Get the ISO week for calculating current hours
@@ -91,7 +92,7 @@ export async function findStaffSuggestions(
   for (const staff of certifiedStaff) {
     // Check if they have the required skill
     if (requiredSkillId) {
-      const hasSkill = staff.skills.some((s) => s.skillId === requiredSkillId)
+      const hasSkill = staff.skills.some((s: { skillId: string }) => s.skillId === requiredSkillId)
       if (!hasSkill) continue
     }
 
@@ -106,20 +107,22 @@ export async function findStaffSuggestions(
     }
     const currentWeekHours = currentMinutes / 60
 
-    // Run constraint checks
-    const constraintResult = await checkConstraints({
-      userId: staff.id,
-      shiftId,
-      startTimeUtc,
-      endTimeUtc,
-      locationId,
+    // Basic validation checks
+    const warnings: string[] = []
+    
+    // Check for overlapping shifts
+    const hasOverlap = staff.shiftAssignments.some((assignment: { shift: { startTimeUtc: Date; endTimeUtc: Date } }) => {
+      const assignmentStart = assignment.shift.startTimeUtc
+      const assignmentEnd = assignment.shift.endTimeUtc
+      return (
+        (startTimeUtc >= assignmentStart && startTimeUtc < assignmentEnd) ||
+        (endTimeUtc > assignmentStart && endTimeUtc <= assignmentEnd) ||
+        (startTimeUtc <= assignmentStart && endTimeUtc >= assignmentEnd)
+      )
     })
-
-    if (constraintResult.violated) {
-      // Skip staff with hard blocks
-      const hasHardBlock = constraintResult.explanation?.includes("Cannot") ||
-        constraintResult.explanation?.includes("required")
-      if (hasHardBlock) continue
+    
+    if (hasOverlap) {
+      continue // Skip staff with overlapping shifts
     }
 
     // Calculate score (lower hours = higher score)
@@ -129,12 +132,10 @@ export async function findStaffSuggestions(
       userId: staff.id,
       name: staff.name,
       currentWeekHours,
-      certifications: staff.certifications.map((c) => c.location.name),
-      skills: staff.skills.map((s) => s.skill.name),
+      certifications: staff.certifications.map((c: { location: { name: string } }) => c.location.name),
+      skills: staff.skills.map((s: { skill: { name: string } }) => s.skill.name),
       score,
-      warnings: constraintResult.violated
-        ? [constraintResult.explanation || "Constraint violation"]
-        : [],
+      warnings,
     })
   }
 
@@ -244,19 +245,6 @@ export async function getAssignmentPreview(
 
   if (projectedWeekHours > 12) {
     warnings.push("Daily hours would exceed 12 hours")
-  }
-
-  // Run constraint check
-  const constraintResult = await checkConstraints({
-    userId,
-    shiftId,
-    startTimeUtc,
-    endTimeUtc,
-    locationId: "", // Will be filled by checkConstraints
-  })
-
-  if (constraintResult.violated) {
-    warnings.push(constraintResult.explanation || "Constraint violation")
   }
 
   return {

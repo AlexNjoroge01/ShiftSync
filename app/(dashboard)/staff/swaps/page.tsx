@@ -2,12 +2,33 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { ArrowLeftRight, ArrowDownCircle, Clock, User, Plus, X } from "lucide-react"
+import { ArrowLeftRight, ArrowDownCircle, Clock, User } from "lucide-react"
+import { CreateSwapRequestModal } from "@/components/swaps/CreateSwapRequestModal"
+import { ClaimDropButton } from "@/components/swaps/ClaimDropButton"
+import { CancelSwapRequestButton } from "@/components/swaps/CancelSwapRequestButton"
 
 export default async function StaffSwapsPage() {
   const session = await auth()
   
+  // Get user's shift assignments for the modal
+  const myAssignments = await prisma.shiftAssignment.findMany({
+    where: {
+      userId: session?.user?.id,
+      status: "ASSIGNED",
+      shift: {
+        startTimeUtc: { gte: new Date() },
+      },
+    },
+    include: {
+      shift: {
+        include: {
+          location: true,
+        },
+      },
+    },
+    orderBy: { shift: { startTimeUtc: "asc" } },
+  })
+
   // Get user's swap requests
   const myRequests = await prisma.swapRequest.findMany({
     where: {
@@ -102,12 +123,9 @@ export default async function StaffSwapsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Swap & Drop</h1>
-          <p className="text-slate-500 mt-1">Request shift swaps or drop shifts you can&apos;t work</p>
+          <p className="text-slate-500 mt-1">Request shift swaps or drop shifts you can't work</p>
         </div>
-        <Button className="bg-slate-900 hover:bg-slate-800 text-white">
-          <Plus className="h-4 w-4 mr-2" />
-          New Request
-        </Button>
+        <CreateSwapRequestModal assignments={myAssignments} />
       </div>
 
       {/* My Requests */}
@@ -153,7 +171,7 @@ export default async function StaffSwapsPage() {
                       <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                         <Clock className="h-3.5 w-3.5" />
                         <span>
-                          {formatShiftDate(request.shiftAssignment.shift.date)} • {" "}
+                          {formatShiftDate(request.shiftAssignment.shift.date)} •{" "}
                           {formatShiftTime(
                             request.shiftAssignment.shift.startTimeUtc,
                             request.shiftAssignment.shift.endTimeUtc,
@@ -169,9 +187,7 @@ export default async function StaffSwapsPage() {
                     </div>
                   </div>
                   {request.status === "PENDING" && (
-                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-500">
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <CancelSwapRequestButton swapRequestId={request.id} />
                   )}
                 </div>
               ))}
@@ -222,7 +238,7 @@ export default async function StaffSwapsPage() {
                       <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                         <Clock className="h-3.5 w-3.5" />
                         <span>
-                          {formatShiftDate(drop.shiftAssignment.shift.date)} • {" "}
+                          {formatShiftDate(drop.shiftAssignment.shift.date)} •{" "}
                           {formatShiftTime(
                             drop.shiftAssignment.shift.startTimeUtc,
                             drop.shiftAssignment.shift.endTimeUtc,
@@ -236,9 +252,7 @@ export default async function StaffSwapsPage() {
                       </div>
                     </div>
                   </div>
-                  <Button className="bg-cyan-600 hover:bg-cyan-700 text-white">
-                    Claim
-                  </Button>
+                  <ClaimDropButton swapRequestId={drop.id} />
                 </div>
               ))}
             </div>

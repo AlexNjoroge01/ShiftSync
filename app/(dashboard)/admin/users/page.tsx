@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Users, Plus, Edit, Shield, UserCog, User } from "lucide-react"
+import { Users, Edit, Shield, UserCog, User } from "lucide-react"
+import { AddUserModal } from "@/components/users/AddUserModal"
 
 const roleColors = {
   ADMIN: "bg-red-50 text-red-600 border-red-100",
@@ -58,10 +59,7 @@ export default async function AdminUsersPage() {
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">User Management</h1>
           <p className="text-slate-500 mt-1">Create and manage user accounts</p>
         </div>
-        <Button className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-6">
-          <Plus className="h-4 w-4 mr-2" />
-          Add User
-        </Button>
+        <AddUserModal />
       </div>
 
       <div className="grid gap-4">

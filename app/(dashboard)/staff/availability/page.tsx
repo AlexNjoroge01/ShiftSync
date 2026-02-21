@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, Plus, Trash2, Calendar, AlertCircle } from "lucide-react"
+import { Clock, Trash2, Calendar, AlertCircle } from "lucide-react"
+import { AddAvailabilityModal } from "@/components/availability/AddAvailabilityModal"
+import { AddExceptionModal } from "@/components/availability/AddExceptionModal"
+import { DeleteAvailabilityButton } from "@/components/availability/DeleteAvailabilityButton"
 
 export default async function StaffAvailabilityPage() {
   const session = await auth()
@@ -66,10 +69,7 @@ export default async function StaffAvailabilityPage() {
               <CardTitle className="text-slate-900">Weekly Availability</CardTitle>
               <CardDescription>Set your available times for each day of the week</CardDescription>
             </div>
-            <Button className="bg-slate-900 hover:bg-slate-800 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Time Slot
-            </Button>
+            <AddAvailabilityModal />
           </div>
         </CardHeader>
         <CardContent>
@@ -99,20 +99,27 @@ export default async function StaffAvailabilityPage() {
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           {dayAvailability.map((slot) => (
-                            <Badge
-                              key={slot.id}
-                              variant="outline"
-                              className="border-green-200 text-green-700 bg-green-50"
-                            >
-                              {slot.startTime} - {slot.endTime}
-                            </Badge>
+                            <div key={slot.id} className="flex items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className="border-green-200 text-green-700 bg-green-50"
+                              >
+                                {slot.startTime} - {slot.endTime}
+                              </Badge>
+                              <DeleteAvailabilityButton id={slot.id} type="recurring" />
+                            </div>
                           ))}
                         </div>
                       )}
                     </div>
-                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    <AddAvailabilityModal
+                      trigger={
+                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
+                          <Clock className="h-4 w-4" />
+                        </Button>
+                      }
+                      defaultDay={index}
+                    />
                   </div>
                 )
               })}
@@ -127,12 +134,9 @@ export default async function StaffAvailabilityPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-slate-900">Exceptions</CardTitle>
-              <CardDescription>Specific dates when you&apos;re unavailable or have modified availability</CardDescription>
+              <CardDescription>Specific dates when you're unavailable or have modified availability</CardDescription>
             </div>
-            <Button className="bg-slate-900 hover:bg-slate-800 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Exception
-            </Button>
+            <AddExceptionModal />
           </div>
         </CardHeader>
         <CardContent>
@@ -142,7 +146,7 @@ export default async function StaffAvailabilityPage() {
                 <Calendar className="h-8 w-8 text-slate-400" />
               </div>
               <p className="text-slate-600 font-medium">No exceptions</p>
-              <p className="text-slate-400 text-sm mt-1">Add dates when you can&apos;t work</p>
+              <p className="text-slate-400 text-sm mt-1">Add dates when you can't work</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -181,9 +185,7 @@ export default async function StaffAvailabilityPage() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-500">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <DeleteAvailabilityButton id={exception.id} type="exception" />
                 </div>
               ))}
             </div>
