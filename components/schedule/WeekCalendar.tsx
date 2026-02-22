@@ -10,11 +10,13 @@ interface WeekCalendarProps {
   shifts: ShiftWithDetails[]
   currentDate: Date
   onShiftClick?: (shift: ShiftWithDetails) => void
+  showAssignButton?: boolean
+  onAssignmentChange?: () => void
 }
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-export function WeekCalendar({ shifts, currentDate, onShiftClick }: WeekCalendarProps) {
+export function WeekCalendar({ shifts, currentDate, onShiftClick, showAssignButton, onAssignmentChange }: WeekCalendarProps) {
   const weekDays = useMemo(() => {
     const start = startOfWeek(currentDate, { weekStartsOn: 0 })
     return Array.from({ length: 7 }, (_, i) => addDays(start, i))
@@ -93,6 +95,8 @@ export function WeekCalendar({ shifts, currentDate, onShiftClick }: WeekCalendar
                           key={shift.id}
                           shift={shift}
                           onClick={() => onShiftClick?.(shift)}
+                          showAssignButton={showAssignButton}
+                          onAssignmentChange={onAssignmentChange}
                         />
                       ))
                   )}

@@ -8,6 +8,7 @@ import { WeekCalendar } from "@/components/schedule/WeekCalendar"
 import { CreateShiftModal } from "@/components/shifts/CreateShiftModal"
 import { PublishWeekButton } from "@/components/schedule/PublishWeekButton"
 import { format, startOfWeek, addWeeks, subWeeks } from "date-fns"
+import type { ShiftWithDetails } from "@/types"
 
 interface SchedulePageProps {
   searchParams: Promise<{ date?: string; location?: string }>
@@ -48,6 +49,7 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
       requiredSkill: true,
       createdBy: { select: { id: true, name: true } },
       assignments: {
+        where: { status: "ASSIGNED" },
         include: {
           user: { select: { id: true, name: true, email: true, role: true } },
         },
@@ -55,6 +57,38 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
     },
     orderBy: { startTimeUtc: "asc" },
   })
+
+  // Transform shifts to match ShiftWithDetails type
+  const transformedShifts: ShiftWithDetails[] = shifts.map((shift) => ({
+    id: shift.id,
+    locationId: shift.locationId,
+    location: {
+      id: shift.location.id,
+      name: shift.location.name,
+      timezone: shift.location.timezone,
+      address: shift.location.address,
+    },
+    date: shift.date,
+    startTimeUtc: shift.startTimeUtc,
+    endTimeUtc: shift.endTimeUtc,
+    requiredSkillId: shift.requiredSkillId,
+    requiredSkill: shift.requiredSkill,
+    headcount: shift.headcount,
+    isPublished: shift.isPublished,
+    publishedAt: shift.publishedAt,
+    editCutoffHours: shift.editCutoffHours,
+    isPremium: shift.isPremium,
+    createdBy: shift.createdBy,
+    assignments: shift.assignments.map((a) => ({
+      id: a.id,
+      shiftId: shift.id,
+      userId: a.userId,
+      status: a.status as "ASSIGNED" | "CANCELLED" | "SWAPPED",
+      assignedBy: "",
+      assignedAt: new Date(),
+      user: a.user,
+    })),
+  }))
 
   // Check if any shifts are unpublished
   const hasUnpublishedShifts = shifts.some((s) => !s.isPublished)
@@ -145,7 +179,11 @@ export default async function ManagerSchedulePage({ searchParams }: SchedulePage
       </Card>
 
       {/* Week Calendar */}
-      <WeekCalendar shifts={shifts} currentDate={currentDate} />
+      <WeekCalendar 
+        shifts={transformedShifts} 
+        currentDate={currentDate} 
+        showAssignButton={true}
+      />
 
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-4">
