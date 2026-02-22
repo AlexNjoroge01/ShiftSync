@@ -2,9 +2,10 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Calendar, Clock, Users, MapPin, Edit, Eye } from "lucide-react"
+import { Calendar, Clock, Users, MapPin } from "lucide-react"
 import { CreateShiftModal } from "@/components/shifts/CreateShiftModal"
+import { EditShiftModal } from "@/components/shifts/EditShiftModal"
+import { DeleteShiftButton } from "@/components/shifts/DeleteShiftButton"
 import type { Shift, Location } from "@prisma/client"
 
 type ShiftWithDetails = Shift & {
@@ -202,13 +203,13 @@ export default async function ManagerShiftsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                  <div className="flex gap-1">
+                    <EditShiftModal shift={shift} skills={skills} />
+                    <DeleteShiftButton 
+                      shiftId={shift.id} 
+                      shiftInfo={`${shift.location.name} - ${formatShiftDate(shift.date)}`}
+                      isPublished={shift.isPublished}
+                    />
                   </div>
                 </div>
               </CardContent>

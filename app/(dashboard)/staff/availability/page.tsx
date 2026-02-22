@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, Trash2, Calendar, AlertCircle } from "lucide-react"
+import { Clock, Calendar, AlertCircle } from "lucide-react"
 import { AddAvailabilityModal } from "@/components/availability/AddAvailabilityModal"
 import { AddExceptionModal } from "@/components/availability/AddExceptionModal"
 import { DeleteAvailabilityButton } from "@/components/availability/DeleteAvailabilityButton"
+import { EditAvailabilityModal } from "@/components/availability/EditAvailabilityModal"
 
 export default async function StaffAvailabilityPage() {
   const session = await auth()
@@ -99,13 +100,14 @@ export default async function StaffAvailabilityPage() {
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           {dayAvailability.map((slot) => (
-                            <div key={slot.id} className="flex items-center gap-2">
+                            <div key={slot.id} className="flex items-center gap-1">
                               <Badge
                                 variant="outline"
                                 className="border-green-200 text-green-700 bg-green-50"
                               >
                                 {slot.startTime} - {slot.endTime}
                               </Badge>
+                              <EditAvailabilityModal availability={slot} />
                               <DeleteAvailabilityButton id={slot.id} type="recurring" />
                             </div>
                           ))}

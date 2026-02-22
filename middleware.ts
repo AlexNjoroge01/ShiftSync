@@ -25,11 +25,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // For logged-in users, we need to check role
-  // Since we can't decode JWT in Edge without crypto, we'll let the page handle role-based redirects
-  // Just redirect logged-in users away from login page to a default route
+ 
   if (isAuthRoute && isLoggedIn) {
-    // Redirect to a default page - the page will handle role-based routing
+   
     return NextResponse.redirect(new URL("/", nextUrl.origin))
   }
 

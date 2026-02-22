@@ -2,9 +2,10 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Users, Edit, Shield, UserCog, User } from "lucide-react"
+import { Users, Shield, UserCog, User } from "lucide-react"
 import { AddUserModal } from "@/components/users/AddUserModal"
+import { EditUserModal } from "@/components/users/EditUserModal"
+import { DeleteUserButton } from "@/components/users/DeleteUserButton"
 
 const roleColors = {
   ADMIN: "bg-red-50 text-red-600 border-red-100",
@@ -131,9 +132,10 @@ export default async function AdminUsersPage() {
                       )}
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <EditUserModal user={user} />
+                    <DeleteUserButton userId={user.id} userName={user.name} />
+                  </div>
                 </div>
               </CardContent>
             </Card>

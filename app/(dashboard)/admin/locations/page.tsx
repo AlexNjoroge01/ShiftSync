@@ -2,9 +2,10 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Building2, Edit, MapPin, Users, Clock } from "lucide-react"
+import { Building2, MapPin, Users, Clock } from "lucide-react"
 import { AddLocationModal } from "@/components/locations/AddLocationModal"
+import { EditLocationModal } from "@/components/locations/EditLocationModal"
+import { DeleteLocationButton } from "@/components/locations/DeleteLocationButton"
 import type { Location, LocationAssignment, LocationCertification } from "@prisma/client"
 
 type LocationWithRelations = Location & {
@@ -89,9 +90,10 @@ export default async function AdminLocationsPage() {
                     </CardDescription>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full">
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <EditLocationModal location={location} />
+                  <DeleteLocationButton locationId={location.id} locationName={location.name} />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
