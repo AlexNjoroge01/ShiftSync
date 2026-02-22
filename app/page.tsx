@@ -63,32 +63,41 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="max-w-4xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full text-sm text-slate-600 mb-8">
-              <Sparkles className="h-4 w-4" />
-              <span>Built for multi-location restaurants</span>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="max-w-xl">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full text-sm text-slate-600 mb-8">
+                <Sparkles className="h-4 w-4" />
+                <span>Built for multi-location restaurants</span>
+              </div>
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.9] mb-8">
+                Scheduling
+                <br />
+                <span className="text-slate-400">reimagined.</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-slate-500 leading-relaxed mb-12">
+                ShiftSync transforms how Coastal Eats manages staff across locations. 
+                No more conflicts. No more overtime surprises. Just seamless scheduling.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/login">
+                  <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 h-14 text-base">
+                    Get Started
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <a href="#how-it-works">
+                  <Button variant="outline" size="lg" className="rounded-full px-8 h-14 text-base border-slate-200">
+                    See how it works
+                  </Button>
+                </a>
+              </div>
             </div>
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.9] mb-8">
-              Scheduling
-              <br />
-              <span className="text-slate-400">reimagined.</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-slate-500 max-w-2xl leading-relaxed mb-12">
-              ShiftSync transforms how Coastal Eats manages staff across locations. 
-              No more conflicts. No more overtime surprises. Just seamless scheduling.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/login">
-                <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 h-14 text-base">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <a href="#how-it-works">
-                <Button variant="outline" size="lg" className="rounded-full px-8 h-14 text-base border-slate-200">
-                  See how it works
-                </Button>
-              </a>
+            <div className="hidden lg:flex justify-center items-center">
+              <img 
+                src="/hero-illustration.svg" 
+                alt="ShiftSync scheduling dashboard showing weekly shifts across multiple restaurant locations" 
+                className="w-full max-w-lg h-auto"
+              />
             </div>
           </div>
         </div>

@@ -1,0 +1,112 @@
+<svg viewBox="0 0 500 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background elements -->
+  <rect x="40" y="60" width="420" height="280" rx="16" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  
+  <!-- Calendar grid background -->
+  <rect x="60" y="100" width="380" height="220" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+  
+  <!-- Calendar header -->
+  <rect x="60" y="100" width="380" height="40" rx="8" fill="#1E293B"/>
+  <rect x="60" y="132" width="380" height="8" fill="#1E293B"/>
+  
+  <!-- Day labels -->
+  <text x="95" y="126" fill="white" font-family="system-ui" font-size="11" font-weight="500">MON</text>
+  <text x="150" y="126" fill="white" font-family="system-ui" font-size="11" font-weight="500">TUE</text>
+  <text x="205" y="126" fill="white" font-family="system-ui" font-size="11" font-weight="500">WED</text>
+  <text x="260" y="126" fill="white" font-family="system-ui" font-size="11" font-weight="500">THU</text>
+  <text x="315" y="126" fill="white" font-family="system-ui" font-size="11" font-weight="500">FRI</text>
+  <text x="370" y="126" fill="white" font-family="system-ui" font-size="11" font-weight="500">SAT</text>
+  
+  <!-- Grid lines -->
+  <line x1="130" y1="140" x2="130" y2="320" stroke="#E2E8F0" stroke-width="1"/>
+  <line x1="185" y1="140" x2="185" y2="320" stroke="#E2E8F0" stroke-width="1"/>
+  <line x1="240" y1="140" x2="240" y2="320" stroke="#E2E8F0" stroke-width="1"/>
+  <line x1="295" y1="140" x2="295" y2="320" stroke="#E2E8F0" stroke-width="1"/>
+  <line x1="350" y1="140" x2="350" y2="320" stroke="#E2E8F0" stroke-width="1"/>
+  
+  <!-- Shift cards - Monday -->
+  <rect x="68" y="150" width="54" height="35" rx="4" fill="#DBEAFE"/>
+  <rect x="68" y="190" width="54" height="35" rx="4" fill="#FEF3C7"/>
+  
+  <!-- Shift cards - Tuesday -->
+  <rect x="138" y="150" width="54" height="35" rx="4" fill="#DCFCE7"/>
+  <rect x="138" y="195" width="54" height="35" rx="4" fill="#DBEAFE"/>
+  
+  <!-- Shift cards - Wednesday -->
+  <rect x="193" y="155" width="54" height="35" rx="4" fill="#FEF3C7"/>
+  <rect x="193" y="200" width="54" height="35" rx="4" fill="#DCFCE7"/>
+  <rect x="193" y="245" width="54" height="35" rx="4" fill="#DBEAFE"/>
+  
+  <!-- Shift cards - Thursday -->
+  <rect x="248" y="150" width="54" height="35" rx="4" fill="#DBEAFE"/>
+  <rect x="248" y="195" width="54" height="35" rx="4" fill="#DCFCE7"/>
+  
+  <!-- Shift cards - Friday -->
+  <rect x="303" y="155" width="54" height="35" rx="4" fill="#FEF3C7"/>
+  <rect x="303" y="200" width="54" height="35" rx="4" fill="#DBEAFE"/>
+  <rect x="303" y="245" width="54" height="35" rx="4" fill="#DCFCE7"/>
+  
+  <!-- Shift cards - Saturday -->
+  <rect x="358" y="150" width="54" height="35" rx="4" fill="#DCFCE7"/>
+  <rect x="358" y="195" width="54" height="35" rx="4" fill="#FEF3C7"/>
+  <rect x="358" y="245" width="54" height="35" rx="4" fill="#DBEAFE"/>
+  
+  <!-- Location badges -->
+  <rect x="70" y="155" width="50" height="12" rx="2" fill="#3B82F6" fill-opacity="0.3"/>
+  <rect x="140" y="155" width="50" height="12" rx="2" fill="#22C55E" fill-opacity="0.3"/>
+  <rect x="195" y="160" width="50" height="12" rx="2" fill="#F59E0B" fill-opacity="0.3"/>
+  <rect x="250" y="155" width="50" height="12" rx="2" fill="#3B82F6" fill-opacity="0.3"/>
+  <rect x="305" y="160" width="50" height="12" rx="2" fill="#F59E0B" fill-opacity="0.3"/>
+  <rect x="360" y="155" width="50" height="12" rx="2" fill="#22C55E" fill-opacity="0.3"/>
+  
+  <!-- Floating elements - Location pins -->
+  <g transform="translate(420, 40)">
+    <circle cx="20" cy="20" r="20" fill="#1E293B"/>
+    <path d="M20 12C16.6863 12 14 14.6863 14 18C14 23 20 28 20 28C20 28 26 23 26 18C26 14.6863 23.3137 12 20 12ZM20 20C18.8954 20 18 19.1046 18 18C18 16.8954 18.8954 16 20 16C21.1046 16 22 16.8954 22 18C22 19.1046 21.1046 20 20 20Z" fill="white"/>
+  </g>
+  
+  <g transform="translate(10, 180)">
+    <circle cx="20" cy="20" r="16" fill="#3B82F6"/>
+    <path d="M20 14C17.2386 14 15 16.2386 15 19C15 23 20 27 20 27C20 27 25 23 25 19C25 16.2386 22.7614 14 20 14ZM20 21C18.8954 21 18 20.1046 18 19C18 17.8954 18.8954 17 20 17C21.1046 17 22 17.8954 22 19C22 20.1046 21.1046 21 20 21Z" fill="white"/>
+  </g>
+  
+  <!-- Staff avatars -->
+  <g transform="translate(420, 280)">
+    <circle cx="15" cy="15" r="15" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="2"/>
+    <circle cx="15" cy="12" r="5" fill="#94A3B8"/>
+    <path d="M7 26C7 22 10.5 19 15 19C19.5 19 23 22 23 26" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  
+  <g transform="translate(395, 300)">
+    <circle cx="15" cy="15" r="15" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+    <circle cx="15" cy="12" r="5" fill="#3B82F6"/>
+    <path d="M7 26C7 22 10.5 19 15 19C19.5 19 23 22 23 26" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  
+  <g transform="translate(370, 320)">
+    <circle cx="15" cy="15" r="15" fill="#DCFCE7" stroke="#22C55E" stroke-width="2"/>
+    <circle cx="15" cy="12" r="5" fill="#22C55E"/>
+    <path d="M7 26C7 22 10.5 19 15 19C19.5 19 23 22 23 26" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Notification bell -->
+  <g transform="translate(15, 60)">
+    <circle cx="18" cy="18" r="18" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+    <path d="M18 10C15.2386 10 13 12.2386 13 15V18L11 21H25L23 18V15C23 12.2386 20.7614 10 18 10Z" fill="#F59E0B"/>
+    <path d="M15 21C15 22.6569 16.3431 24 18 24C19.6569 24 21 22.6569 21 21" stroke="#F59E0B" stroke-width="1.5"/>
+    <circle cx="22" cy="11" r="4" fill="#EF4444"/>
+  </g>
+  
+  <!-- Checkmark badge -->
+  <g transform="translate(380, 80)">
+    <circle cx="16" cy="16" r="16" fill="#DCFCE7" stroke="#22C55E" stroke-width="2"/>
+    <path d="M10 16L14 20L22 12" stroke="#22C55E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- Clock icon -->
+  <g transform="translate(15, 280)">
+    <circle cx="20" cy="20" r="20" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="2"/>
+    <circle cx="20" cy="20" r="12" stroke="#64748B" stroke-width="2" fill="none"/>
+    <path d="M20 14V20L24 24" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
