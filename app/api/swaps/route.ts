@@ -148,21 +148,23 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Check if user has the required skill
-      const userSkill = await prisma.userSkill.findUnique({
-        where: {
-          userId_skillId: {
-            userId: session.user.id,
-            skillId: shift.requiredSkillId,
+      // Check if user has the required skill (only if shift requires a skill)
+      if (shift.requiredSkillId) {
+        const userSkill = await prisma.userSkill.findUnique({
+          where: {
+            userId_skillId: {
+              userId: session.user.id,
+              skillId: shift.requiredSkillId,
+            },
           },
-        },
-      })
+        })
 
-      if (!userSkill) {
-        return NextResponse.json(
-          { error: "You do not have the required skill for this shift" },
-          { status: 403 }
-        )
+        if (!userSkill) {
+          return NextResponse.json(
+            { error: "You do not have the required skill for this shift" },
+            { status: 403 }
+          )
+        }
       }
 
       // Check constraints
@@ -213,7 +215,7 @@ export async function POST(request: NextRequest) {
           type: "DROP",
           requesterId: session.user.id,
           shiftId: shift.id,
-          shiftAssignmentId: null, // Null for pickup requests (unassigned shifts)
+          shiftAssignmentId: undefined, // Undefined for pickup requests (unassigned shifts)
           targetUserId: session.user.id, // The user picking up
           status: "STAFF_ACCEPTED", // Skip to staff accepted since they're claiming it
           expiresAt: new Date(shift.startTimeUtc.getTime() - 24 * 60 * 60 * 1000),
@@ -552,6 +554,9 @@ export async function PUT(request: NextRequest) {
     const swapRequest = await prisma.swapRequest.findUnique({
       where: { id: swapRequestId },
       include: {
+        shift: {
+          include: { location: true },
+        },
         shiftAssignment: {
           include: {
             shift: {
@@ -644,8 +649,12 @@ export async function PUT(request: NextRequest) {
         })
 
         // Notify managers about the claim
+        const locationId = swapRequest.shiftAssignment?.shift.locationId ?? swapRequest.shift.locationId
+        const locationName = swapRequest.shiftAssignment?.shift.location.name ?? swapRequest.shift.location.name
+        const shiftDate = swapRequest.shiftAssignment?.shift.date ?? swapRequest.shift.date
+
         const managers = await prisma.locationAssignment.findMany({
-          where: { locationId: swapRequest.shiftAssignment.shift.locationId },
+          where: { locationId },
           include: {
             manager: {
               select: { id: true, name: true, email: true, notificationPreference: true },
@@ -659,11 +668,11 @@ export async function PUT(request: NextRequest) {
               userId: assignment.managerId,
               type: "DROP_CLAIMED",
               title: "Drop Request Claimed",
-              message: `${claimingUser?.name || "Someone"} has claimed the drop request for ${swapRequest.shiftAssignment.shift.location.name} on ${swapRequest.shiftAssignment.shift.date.toLocaleDateString()}. Approval needed.`,
+              message: `${claimingUser?.name || "Someone"} has claimed the drop request for ${locationName} on ${shiftDate.toLocaleDateString()}. Approval needed.`,
               meta: {
                 swapRequestId,
                 shiftId: swapRequest.shiftId,
-                locationId: swapRequest.shiftAssignment.shift.locationId,
+                locationId,
                 claimedBy: userId,
               },
             },
@@ -676,7 +685,7 @@ export async function PUT(request: NextRequest) {
             userId: swapRequest.requesterId,
             type: "DROP_CLAIMED",
             title: "Your Drop Request Was Claimed",
-            message: `${claimingUser?.name || "Someone"} has claimed your drop request for ${swapRequest.shiftAssignment.shift.location.name}. Waiting for manager approval.`,
+            message: `${claimingUser?.name || "Someone"} has claimed your drop request for ${locationName}. Waiting for manager approval.`,
             meta: {
               swapRequestId,
               shiftId: swapRequest.shiftId,

@@ -52,6 +52,11 @@ export default async function StaffSwapsPage() {
       requesterId: session?.user?.id,
     },
     include: {
+      shift: {
+        include: {
+          location: true,
+        },
+      },
       shiftAssignment: {
         include: {
           shift: {
@@ -80,6 +85,12 @@ export default async function StaffSwapsPage() {
       requesterId: { not: session?.user?.id },
     },
     include: {
+      shift: {
+        include: {
+          location: true,
+          requiredSkill: true,
+        },
+      },
       shiftAssignment: {
         include: {
           shift: {
@@ -218,12 +229,25 @@ export default async function StaffSwapsPage() {
                       <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                         <Clock className="h-3.5 w-3.5" />
                         <span>
-                          {formatShiftDate(request.shiftAssignment.shift.date)} •{" "}
-                          {formatShiftTime(
-                            request.shiftAssignment.shift.startTimeUtc,
-                            request.shiftAssignment.shift.endTimeUtc,
-                            request.shiftAssignment.shift.location.timezone
-                          )}
+                          {request.shiftAssignment ? (
+                            <>
+                              {formatShiftDate(request.shiftAssignment.shift.date)} •{" "}
+                              {formatShiftTime(
+                                request.shiftAssignment.shift.startTimeUtc,
+                                request.shiftAssignment.shift.endTimeUtc,
+                                request.shiftAssignment.shift.location.timezone
+                              )}
+                            </>
+                          ) : request.shift ? (
+                            <>
+                              {formatShiftDate(request.shift.date)} •{" "}
+                              {formatShiftTime(
+                                request.shift.startTimeUtc,
+                                request.shift.endTimeUtc,
+                                request.shift.location.timezone
+                              )}
+                            </>
+                          ) : null}
                         </span>
                       </div>
                       {request.targetUser && (
@@ -274,9 +298,9 @@ export default async function StaffSwapsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-slate-900">
-                          {drop.shiftAssignment.shift.location.name}
+                          {drop.shiftAssignment ? drop.shiftAssignment.shift.location.name : (drop.shift?.location?.name ?? "Unknown Location")}
                         </span>
-                        {drop.shiftAssignment.shift.isPremium && (
+                        {(drop.shiftAssignment?.shift.isPremium ?? drop.shift?.isPremium) && (
                           <Badge className="bg-amber-100 text-amber-700 border-amber-200">
                             Premium
                           </Badge>
@@ -285,12 +309,25 @@ export default async function StaffSwapsPage() {
                       <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                         <Clock className="h-3.5 w-3.5" />
                         <span>
-                          {formatShiftDate(drop.shiftAssignment.shift.date)} •{" "}
-                          {formatShiftTime(
-                            drop.shiftAssignment.shift.startTimeUtc,
-                            drop.shiftAssignment.shift.endTimeUtc,
-                            drop.shiftAssignment.shift.location.timezone
-                          )}
+                          {drop.shiftAssignment ? (
+                            <>
+                              {formatShiftDate(drop.shiftAssignment.shift.date)} •{" "}
+                              {formatShiftTime(
+                                drop.shiftAssignment.shift.startTimeUtc,
+                                drop.shiftAssignment.shift.endTimeUtc,
+                                drop.shiftAssignment.shift.location.timezone
+                              )}
+                            </>
+                          ) : drop.shift ? (
+                            <>
+                              {formatShiftDate(drop.shift.date)} •{" "}
+                              {formatShiftTime(
+                                drop.shift.startTimeUtc,
+                                drop.shift.endTimeUtc,
+                                drop.shift.location.timezone
+                              )}
+                            </>
+                          ) : null}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">

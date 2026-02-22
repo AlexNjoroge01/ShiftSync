@@ -18,7 +18,7 @@ interface User {
   desiredHoursPerWeek: number | null
   managedLocations?: { id: string; locationId: string; location: { id: string; name: string } }[]
   certifications?: { id: string; locationId: string; location: { id: string; name: string } }[]
-  skills?: { id: string; skillId: string; skill: { id: string; name: string } }[]
+  skills?: { skillId: string; skill: { id: string; name: string } }[]
 }
 
 interface EditUserModalProps {
