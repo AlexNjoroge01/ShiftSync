@@ -2,8 +2,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { ArrowLeftRight, ArrowDownCircle, Clock, User, Check, X, AlertCircle } from "lucide-react"
+import { ArrowLeftRight, ArrowDownCircle, Clock, User, AlertCircle } from "lucide-react"
+import { ManagerSwapActions } from "@/components/swaps/ManagerSwapActions"
 
 export default async function ManagerSwapsPage() {
   const session = await auth()
@@ -206,25 +206,11 @@ export default async function ManagerSwapsPage() {
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex gap-2">
-                    {request.status === "STAFF_ACCEPTED" && (
-                      <>
-                        <Button className="bg-green-600 hover:bg-green-700 text-white">
-                          <Check className="h-4 w-4 mr-2" />
-                          Approve
-                        </Button>
-                        <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
-                          <X className="h-4 w-4 mr-2" />
-                          Reject
-                        </Button>
-                      </>
-                    )}
-                    {request.status === "PENDING" && request.type === "DROP" && (
-                      <Button variant="outline" className="border-slate-200 text-slate-700">
-                        Find Coverage
-                      </Button>
-                    )}
-                  </div>
+                  <ManagerSwapActions
+                    swapRequestId={request.id}
+                    status={request.status}
+                    type={request.type}
+                  />
                 </div>
               </CardContent>
             </Card>

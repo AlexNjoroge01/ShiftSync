@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
 import { useSession, signOut } from "next-auth/react"
-import { Bell, LogOut, User, ChevronDown } from "lucide-react"
+import { LogOut, User, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,7 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
+import { NotificationBell } from "@/components/notifications/NotificationBell"
+import { NotificationCenter } from "@/components/notifications/NotificationCenter"
 import { toast } from "sonner"
 
 interface HeaderProps {
@@ -21,7 +21,6 @@ interface HeaderProps {
 
 export function Header({ className }: HeaderProps) {
   const { data: session } = useSession()
-  const [notificationCount] = useState(0) // Will be replaced with real data
 
   const roleLabel = {
     ADMIN: "Administrator",
@@ -44,21 +43,10 @@ export function Header({ className }: HeaderProps) {
 
       <div className="flex items-center gap-4">
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full"
-        >
-          <Bell className="h-5 w-5" />
-          {notificationCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-            >
-              {notificationCount}
-            </Badge>
-          )}
-        </Button>
+        <div className="relative">
+          <NotificationBell />
+          <NotificationCenter />
+        </div>
 
         {/* User Menu */}
         <DropdownMenu>

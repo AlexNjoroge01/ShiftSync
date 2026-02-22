@@ -6,9 +6,11 @@ import type { Prisma, SwapRequestType, SwapRequestStatus } from "@prisma/client"
 
 const createSwapRequestSchema = z.object({
   type: z.enum(["SWAP", "DROP"]),
-  shiftAssignmentId: z.string().min(1, "Shift assignment is required"),
+  shiftAssignmentId: z.string().optional().nullable(),
+  shiftId: z.string().optional().nullable(),
   targetUserId: z.string().optional().nullable(),
   targetShiftAssignmentId: z.string().optional().nullable(),
+  action: z.enum(["PICKUP"]).optional(),
 })
 
 // GET /api/swaps - List swap requests
@@ -110,6 +112,180 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const validatedData = createSwapRequestSchema.parse(body)
+
+    // Handle PICKUP action for unassigned shifts
+    if (validatedData.action === "PICKUP" && validatedData.shiftId) {
+      // Get the shift
+      const shift = await prisma.shift.findUnique({
+        where: { id: validatedData.shiftId },
+        include: {
+          location: true,
+          requiredSkill: true,
+        },
+      })
+
+      if (!shift) {
+        return NextResponse.json(
+          { error: "Shift not found" },
+          { status: 404 }
+        )
+      }
+
+      // Check if user is certified for this location
+      const certification = await prisma.locationCertification.findUnique({
+        where: {
+          userId_locationId: {
+            userId: session.user.id,
+            locationId: shift.locationId,
+          },
+        },
+      })
+
+      if (!certification) {
+        return NextResponse.json(
+          { error: "You are not certified to work at this location" },
+          { status: 403 }
+        )
+      }
+
+      // Check if user has the required skill
+      const userSkill = await prisma.userSkill.findUnique({
+        where: {
+          userId_skillId: {
+            userId: session.user.id,
+            skillId: shift.requiredSkillId,
+          },
+        },
+      })
+
+      if (!userSkill) {
+        return NextResponse.json(
+          { error: "You do not have the required skill for this shift" },
+          { status: 403 }
+        )
+      }
+
+      // Check constraints
+      const { checkAssignmentConstraints } = await import("@/lib/scheduling/constraints")
+      const constraintCheck = await checkAssignmentConstraints(
+        session.user.id,
+        shift.id,
+        session.user.id
+      )
+
+      // Check for hard blocks
+      const hardBlocks = constraintCheck.violations.filter(
+        (v) =>
+          v.rule === "CERTIFICATION" ||
+          v.rule === "DOUBLE_BOOKING" ||
+          v.rule === "DAILY_HOURS_12" ||
+          v.rule === "CONSECUTIVE_DAYS_7"
+      )
+
+      if (hardBlocks.length > 0) {
+        return NextResponse.json(
+          {
+            error: "Cannot pick up this shift due to constraint violations",
+            violations: hardBlocks,
+          },
+          { status: 400 }
+        )
+      }
+
+      // Check for pending request limit (max 3)
+      const pendingCount = await prisma.swapRequest.count({
+        where: {
+          requesterId: session.user.id,
+          status: "PENDING",
+        },
+      })
+
+      if (pendingCount >= 3) {
+        return NextResponse.json(
+          { error: "You have reached the maximum of 3 pending swap requests" },
+          { status: 400 }
+        )
+      }
+
+      // Create a swap request to track this pickup (no shiftAssignmentId since it's unassigned)
+      const swapRequest = await prisma.swapRequest.create({
+        data: {
+          type: "DROP",
+          requesterId: session.user.id,
+          shiftId: shift.id,
+          shiftAssignmentId: null, // Null for pickup requests (unassigned shifts)
+          targetUserId: session.user.id, // The user picking up
+          status: "STAFF_ACCEPTED", // Skip to staff accepted since they're claiming it
+          expiresAt: new Date(shift.startTimeUtc.getTime() - 24 * 60 * 60 * 1000),
+        },
+        include: {
+          shift: {
+            include: { location: true },
+          },
+        },
+      })
+
+      // Create audit log
+      await prisma.auditLog.create({
+        data: {
+          actorId: session.user.id,
+          action: "CREATE",
+          entityType: "SwapRequest",
+          entityId: swapRequest.id,
+          after: JSON.parse(JSON.stringify(swapRequest)),
+        },
+      })
+
+      // Notify managers about the pickup request
+      const managers = await prisma.locationAssignment.findMany({
+        where: { locationId: shift.locationId },
+        include: {
+          manager: {
+            select: { id: true, name: true, email: true, notificationPreference: true },
+          },
+        },
+      })
+
+      const requester = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true },
+      })
+
+      for (const assignment of managers) {
+        await prisma.notification.create({
+          data: {
+            userId: assignment.managerId,
+            type: "DROP_CLAIMED",
+            title: "Shift Pickup Request",
+            message: `${requester?.name || "Someone"} wants to pick up an unassigned shift at ${shift.location.name} on ${shift.date.toLocaleDateString()}. Approval needed.`,
+            meta: {
+              swapRequestId: swapRequest.id,
+              shiftId: shift.id,
+              locationId: shift.locationId,
+              claimedBy: session.user.id,
+            },
+          },
+        })
+      }
+
+      // Broadcast SSE event
+      const { notifySwapUpdate } = await import("@/lib/realtime/sse")
+      notifySwapUpdate(
+        managers.map((m) => m.managerId),
+        swapRequest.id,
+        "STAFF_ACCEPTED"
+      )
+
+      return NextResponse.json(swapRequest, { status: 201 })
+    }
+
+    // Regular swap/drop request flow
+    if (!validatedData.shiftAssignmentId) {
+      return NextResponse.json(
+        { error: "Shift assignment is required" },
+        { status: 400 }
+      )
+    }
 
     // Get the shift assignment
     const shiftAssignment = await prisma.shiftAssignment.findUnique({
@@ -216,6 +392,14 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(shiftAssignment.shift.startTimeUtc)
     expiresAt.setHours(expiresAt.getHours() - 24)
 
+    // Sanitize targetUserId - ensure it's a valid user ID or null
+    // Empty strings, "any", or undefined should be null
+    const sanitizedTargetUserId = validatedData.targetUserId && 
+      validatedData.targetUserId !== "any" && 
+      validatedData.targetUserId.trim() !== "" 
+      ? validatedData.targetUserId 
+      : null
+
     // Create the swap request
     const swapRequest = await prisma.swapRequest.create({
       data: {
@@ -223,8 +407,8 @@ export async function POST(request: NextRequest) {
         requesterId: session.user.id,
         shiftId: shiftAssignment.shiftId,
         shiftAssignmentId: validatedData.shiftAssignmentId,
-        targetUserId: validatedData.targetUserId,
-        targetShiftAssignmentId: validatedData.targetShiftAssignmentId,
+        targetUserId: sanitizedTargetUserId,
+        targetShiftAssignmentId: validatedData.targetShiftAssignmentId || null,
         expiresAt,
       },
       include: {
@@ -406,6 +590,39 @@ export async function PUT(request: NextRequest) {
           )
         }
 
+        // Check if user is qualified for this shift
+        const { checkAssignmentConstraints } = await import("@/lib/scheduling/constraints")
+        const constraintCheck = await checkAssignmentConstraints(
+          userId,
+          swapRequest.shiftId,
+          userId
+        )
+
+        // Check for hard blocks
+        const hardBlocks = constraintCheck.violations.filter(
+          (v) =>
+            v.rule === "CERTIFICATION" ||
+            v.rule === "DOUBLE_BOOKING" ||
+            v.rule === "DAILY_HOURS_12" ||
+            v.rule === "CONSECUTIVE_DAYS_7"
+        )
+
+        if (hardBlocks.length > 0) {
+          return NextResponse.json(
+            {
+              error: "You are not qualified to pick up this shift",
+              violations: hardBlocks,
+            },
+            { status: 400 }
+          )
+        }
+
+        // Get claiming user info
+        const claimingUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, name: true, email: true, notificationPreference: true },
+        })
+
         // Update the swap request with the claiming user
         const updated = await prisma.swapRequest.update({
           where: { id: swapRequestId },
@@ -425,6 +642,56 @@ export async function PUT(request: NextRequest) {
             after: JSON.parse(JSON.stringify(updated)),
           },
         })
+
+        // Notify managers about the claim
+        const managers = await prisma.locationAssignment.findMany({
+          where: { locationId: swapRequest.shiftAssignment.shift.locationId },
+          include: {
+            manager: {
+              select: { id: true, name: true, email: true, notificationPreference: true },
+            },
+          },
+        })
+
+        for (const assignment of managers) {
+          await prisma.notification.create({
+            data: {
+              userId: assignment.managerId,
+              type: "DROP_CLAIMED",
+              title: "Drop Request Claimed",
+              message: `${claimingUser?.name || "Someone"} has claimed the drop request for ${swapRequest.shiftAssignment.shift.location.name} on ${swapRequest.shiftAssignment.shift.date.toLocaleDateString()}. Approval needed.`,
+              meta: {
+                swapRequestId,
+                shiftId: swapRequest.shiftId,
+                locationId: swapRequest.shiftAssignment.shift.locationId,
+                claimedBy: userId,
+              },
+            },
+          })
+        }
+
+        // Notify the original requester that someone claimed their drop
+        await prisma.notification.create({
+          data: {
+            userId: swapRequest.requesterId,
+            type: "DROP_CLAIMED",
+            title: "Your Drop Request Was Claimed",
+            message: `${claimingUser?.name || "Someone"} has claimed your drop request for ${swapRequest.shiftAssignment.shift.location.name}. Waiting for manager approval.`,
+            meta: {
+              swapRequestId,
+              shiftId: swapRequest.shiftId,
+              claimedBy: userId,
+            },
+          },
+        })
+
+        // Broadcast SSE event
+        const { notifySwapUpdate } = await import("@/lib/realtime/sse")
+        notifySwapUpdate(
+          [...managers.map((m) => m.managerId), swapRequest.requesterId],
+          swapRequestId,
+          "STAFF_ACCEPTED"
+        )
 
         return NextResponse.json(updated)
       }
@@ -485,8 +752,20 @@ export async function PUT(request: NextRequest) {
 
         // Use a transaction to update everything atomically
         const result = await prisma.$transaction(async (tx) => {
-          // For DROP: cancel original assignment and create new one
-          if (swapRequest.type === "DROP" && swapRequest.targetUserId) {
+          // For DROP with no shiftAssignmentId (pickup from unassigned): create new assignment
+          if (swapRequest.type === "DROP" && !swapRequest.shiftAssignmentId && swapRequest.targetUserId) {
+            // Create new assignment for the claiming user
+            await tx.shiftAssignment.create({
+              data: {
+                shiftId: swapRequest.shiftId,
+                userId: swapRequest.targetUserId,
+                status: "ASSIGNED",
+                assignedBy: userId,
+              },
+            })
+          }
+          // For regular DROP: cancel original assignment and create new one
+          else if (swapRequest.type === "DROP" && swapRequest.shiftAssignmentId && swapRequest.targetUserId) {
             // Cancel original assignment
             await tx.shiftAssignment.update({
               where: { id: swapRequest.shiftAssignmentId },
@@ -505,7 +784,7 @@ export async function PUT(request: NextRequest) {
           }
 
           // For SWAP: swap the assignments
-          if (swapRequest.type === "SWAP" && swapRequest.targetShiftAssignmentId) {
+          if (swapRequest.type === "SWAP" && swapRequest.targetShiftAssignmentId && swapRequest.shiftAssignmentId) {
             // Get target assignment
             const targetAssignment = await tx.shiftAssignment.findUnique({
               where: { id: swapRequest.targetShiftAssignmentId },
@@ -543,6 +822,47 @@ export async function PUT(request: NextRequest) {
           },
         })
 
+        // Notify all parties about the approval
+        const notifyUserIds = [swapRequest.requesterId]
+        
+        // For DROP, notify the person who claimed it
+        if (swapRequest.type === "DROP" && swapRequest.targetUserId) {
+          notifyUserIds.push(swapRequest.targetUserId)
+        }
+        
+        // For SWAP, notify the target user
+        if (swapRequest.type === "SWAP" && swapRequest.targetUserId) {
+          notifyUserIds.push(swapRequest.targetUserId)
+        }
+
+        // Get requester info for notifications
+        const requester = await prisma.user.findUnique({
+          where: { id: swapRequest.requesterId },
+          select: { name: true, email: true, notificationPreference: true },
+        })
+
+        // Create notifications for all parties
+        for (const notifyUserId of notifyUserIds) {
+          const isRequester = notifyUserId === swapRequest.requesterId
+
+          await prisma.notification.create({
+            data: {
+              userId: notifyUserId,
+              type: "SWAP_APPROVED",
+              title: isRequester ? "Your Request Approved" : "Swap Request Approved",
+              message: `The ${swapRequest.type.toLowerCase()} request for ${swapRequest.shiftAssignment?.shift?.location?.name || "the shift"} has been approved by the manager.`,
+              meta: {
+                swapRequestId,
+                shiftId: swapRequest.shiftId,
+              },
+            },
+          })
+        }
+
+        // Broadcast SSE event
+        const { notifySwapUpdate } = await import("@/lib/realtime/sse")
+        notifySwapUpdate(notifyUserIds, swapRequestId, "MANAGER_APPROVED")
+
         return NextResponse.json(result)
       }
 
@@ -573,6 +893,41 @@ export async function PUT(request: NextRequest) {
             after: JSON.parse(JSON.stringify(updated)),
           },
         })
+
+        // Notify all parties about the rejection
+        const notifyUserIds = [swapRequest.requesterId]
+        
+        // For DROP, notify the person who claimed it
+        if (swapRequest.type === "DROP" && swapRequest.targetUserId) {
+          notifyUserIds.push(swapRequest.targetUserId)
+        }
+        
+        // For SWAP, notify the target user
+        if (swapRequest.type === "SWAP" && swapRequest.targetUserId) {
+          notifyUserIds.push(swapRequest.targetUserId)
+        }
+
+        // Create notifications for all parties
+        for (const notifyUserId of notifyUserIds) {
+          const isRequester = notifyUserId === swapRequest.requesterId
+
+          await prisma.notification.create({
+            data: {
+              userId: notifyUserId,
+              type: "SWAP_CANCELLED",
+              title: isRequester ? "Your Request Rejected" : "Swap Request Rejected",
+              message: `The ${swapRequest.type.toLowerCase()} request for ${swapRequest.shiftAssignment?.shift?.location?.name || "the shift"} has been rejected by the manager.`,
+              meta: {
+                swapRequestId,
+                shiftId: swapRequest.shiftId,
+              },
+            },
+          })
+        }
+
+        // Broadcast SSE event
+        const { notifySwapUpdate } = await import("@/lib/realtime/sse")
+        notifySwapUpdate(notifyUserIds, swapRequestId, "CANCELLED")
 
         return NextResponse.json(updated)
       }

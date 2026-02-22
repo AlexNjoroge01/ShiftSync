@@ -2,14 +2,31 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeftRight, ArrowDownCircle, Clock, User } from "lucide-react"
+import { ArrowLeftRight, ArrowDownCircle, Clock, User, CalendarPlus } from "lucide-react"
 import { CreateSwapRequestModal } from "@/components/swaps/CreateSwapRequestModal"
 import { ClaimDropButton } from "@/components/swaps/ClaimDropButton"
 import { CancelSwapRequestButton } from "@/components/swaps/CancelSwapRequestButton"
+import { PickUpShiftButton } from "@/components/swaps/PickUpShiftButton"
 
 export default async function StaffSwapsPage() {
   const session = await auth()
   
+  // Get user's skills and location certifications
+  const user = await prisma.user.findUnique({
+    where: { id: session?.user?.id },
+    include: {
+      skills: {
+        include: {
+          skill: true,
+        },
+      },
+      certifications: true,
+    },
+  })
+  
+  const userSkillIds = user?.skills.map((s: { skillId: string }) => s.skillId) || []
+  const userLocationIds = user?.certifications.map((lc: { locationId: string }) => lc.locationId) || []
+
   // Get user's shift assignments for the modal
   const myAssignments = await prisma.shiftAssignment.findMany({
     where: {
@@ -68,6 +85,7 @@ export default async function StaffSwapsPage() {
           shift: {
             include: {
               location: true,
+              requiredSkill: true,
             },
           },
         },
@@ -80,6 +98,35 @@ export default async function StaffSwapsPage() {
       },
     },
     orderBy: { createdAt: "desc" },
+    take: 10,
+  })
+
+  // Get unassigned shifts that need coverage and match user's qualifications
+  const unassignedShifts = await prisma.shift.findMany({
+    where: {
+      startTimeUtc: { gte: new Date() },
+      isPublished: true,
+      locationId: { in: userLocationIds },
+      requiredSkillId: { in: userSkillIds },
+      // Shift has fewer assignments than needed
+      assignments: {
+        none: {
+          status: "ASSIGNED",
+        },
+      },
+    },
+    include: {
+      location: true,
+      requiredSkill: true,
+      _count: {
+        select: {
+          assignments: {
+            where: { status: "ASSIGNED" },
+          },
+        },
+      },
+    },
+    orderBy: { startTimeUtc: "asc" },
     take: 10,
   })
 
@@ -253,6 +300,69 @@ export default async function StaffSwapsPage() {
                     </div>
                   </div>
                   <ClaimDropButton swapRequestId={drop.id} />
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Available Shifts Needing Coverage */}
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardContent className="pt-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Available Shifts</h2>
+          <p className="text-sm text-slate-500 mb-4">
+            Pick up unassigned shifts at locations you're certified for
+          </p>
+          {unassignedShifts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <CalendarPlus className="h-8 w-8 text-slate-400" />
+              </div>
+              <p className="text-slate-600 font-medium">No available shifts</p>
+              <p className="text-slate-400 text-sm mt-1">Check back later for shifts needing coverage</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {unassignedShifts.map((shift) => (
+                <div
+                  key={shift.id}
+                  className="flex items-center justify-between p-4 rounded-lg border border-slate-100"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
+                        <CalendarPlus className="h-5 w-5 text-green-600" />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-slate-900">
+                          {shift.location.name}
+                        </span>
+                        {shift.isPremium && (
+                          <Badge className="bg-amber-100 text-amber-700 border-amber-200">
+                            Premium
+                          </Badge>
+                        )}
+                        <Badge variant="outline" className="border-slate-200 text-slate-600 text-xs">
+                          {shift.requiredSkill?.name || "Unknown"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>
+                          {formatShiftDate(shift.date)} •{" "}
+                          {formatShiftTime(
+                            shift.startTimeUtc,
+                            shift.endTimeUtc,
+                            shift.location.timezone
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <PickUpShiftButton shiftId={shift.id} />
                 </div>
               ))}
             </div>

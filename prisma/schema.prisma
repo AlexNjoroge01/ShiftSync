@@ -298,7 +298,7 @@ model SwapRequest {
   status                  SwapRequestStatus @default(PENDING)
   requesterId             String
   shiftId                 String
-  shiftAssignmentId       String
+  shiftAssignmentId       String?           // Nullable for PICKUP requests (unassigned shifts)
   targetUserId            String?           // For SWAP type
   targetShiftAssignmentId String?           // For bilateral swap
   managerNote             String?
@@ -311,7 +311,7 @@ model SwapRequest {
   shift                Shift            @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   requester            User             @relation("SwapRequester", fields: [requesterId], references: [id])
   targetUser           User?            @relation("SwapTarget", fields: [targetUserId], references: [id])
-  shiftAssignment      ShiftAssignment  @relation(fields: [shiftAssignmentId], references: [id], onDelete: Cascade)
+  shiftAssignment      ShiftAssignment?  @relation(fields: [shiftAssignmentId], references: [id], onDelete: Cascade)
   targetShiftAssignment ShiftAssignment? @relation("TargetShiftAssignment", fields: [targetShiftAssignmentId], references: [id], onDelete: SetNull)
 
   @@map("swap_requests")

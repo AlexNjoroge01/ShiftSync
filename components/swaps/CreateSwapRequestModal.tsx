@@ -64,7 +64,7 @@ export function CreateSwapRequestModal({ assignments }: CreateSwapRequestModalPr
         body: JSON.stringify({
           type: requestType,
           shiftAssignmentId: assignmentId,
-          targetUserId: requestType === "SWAP" ? targetUserId : undefined,
+          targetUserId: requestType === "SWAP" && targetUserId && targetUserId !== "any" ? targetUserId : null,
         }),
       })
 
