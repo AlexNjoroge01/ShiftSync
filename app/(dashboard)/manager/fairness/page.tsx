@@ -3,8 +3,11 @@ import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { BarChart3, TrendingUp, TrendingDown, Minus, User, Star, Download } from "lucide-react"
+import { BarChart3, TrendingUp, TrendingDown, Minus, User, Star, Download, RotateCcw } from "lucide-react"
 import type { User as PrismaUser, ShiftAssignment, Shift } from "@prisma/client"
+import { DateRangePicker } from "@/components/ui/date-picker"
+import { format, subDays } from "date-fns"
+import Link from "next/link"
 
 type StaffWithFairness = PrismaUser & {
   shiftAssignments: (ShiftAssignment & {
@@ -12,8 +15,16 @@ type StaffWithFairness = PrismaUser & {
   })[]
 }
 
-export default async function ManagerFairnessPage() {
+interface PageProps {
+  searchParams: Promise<{
+    from?: string
+    to?: string
+  }>
+}
+
+export default async function ManagerFairnessPage({ searchParams }: PageProps) {
   const session = await auth()
+  const resolvedSearchParams = await searchParams
   
   // Get manager's locations
   const managedLocations = await prisma.locationAssignment.findMany({
@@ -23,10 +34,16 @@ export default async function ManagerFairnessPage() {
   
   const locationIds = managedLocations.map((l) => l.locationId)
   
-  // Get date range (last 90 days)
+  // Get date range from params or default to last 90 days
   const now = new Date()
-  const ninetyDaysAgo = new Date(now)
-  ninetyDaysAgo.setDate(now.getDate() - 90)
+  const defaultFrom = subDays(now, 90)
+  
+  const fromDate = resolvedSearchParams.from ? new Date(resolvedSearchParams.from) : defaultFrom
+  const toDate = resolvedSearchParams.to ? new Date(resolvedSearchParams.to) : now
+  
+  // Calculate days in range for hours gap calculation
+  const daysInRange = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24))
+  const weeksInRange = daysInRange / 7
 
   // Get staff with their shifts
   const staff: StaffWithFairness[] = await prisma.user.findMany({
@@ -46,8 +63,8 @@ export default async function ManagerFairnessPage() {
           shift: {
             locationId: { in: locationIds },
             startTimeUtc: {
-              gte: ninetyDaysAgo,
-              lte: now,
+              gte: fromDate,
+              lte: toDate,
             },
           },
         },
@@ -86,7 +103,7 @@ export default async function ManagerFairnessPage() {
       totalHours,
       desiredHours: member.desiredHoursPerWeek,
       hoursGap: member.desiredHoursPerWeek 
-        ? totalHours - (member.desiredHoursPerWeek * 13) // ~13 weeks in 90 days
+        ? totalHours - (member.desiredHoursPerWeek * weeksInRange)
         : null,
     }
   })
@@ -98,6 +115,11 @@ export default async function ManagerFairnessPage() {
     ? 100 / staff.length 
     : 0
 
+  // Build query string for export
+  const exportQuery = new URLSearchParams()
+  if (resolvedSearchParams.from) exportQuery.set("startDate", resolvedSearchParams.from)
+  if (resolvedSearchParams.to) exportQuery.set("endDate", resolvedSearchParams.to)
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -106,15 +128,43 @@ export default async function ManagerFairnessPage() {
           <p className="text-slate-500 mt-1">Premium shift distribution and hours analysis</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="border-slate-200 text-slate-700">
+          <Link
+            href="/manager/fairness"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white shadow-sm hover:bg-slate-50 h-9 px-4 py-2 text-slate-700"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset
+          </Link>
+          <a
+            href={`/api/analytics/fairness/export?${exportQuery.toString()}`}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white shadow-sm hover:bg-slate-50 h-9 px-4 py-2 text-slate-700"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export CSV
-          </Button>
+          </a>
         </div>
       </div>
 
+      {/* Date Range Filter */}
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardContent className="pt-6">
+          <form method="GET" className="flex items-end gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Date Range</label>
+              <DateRangePickerWrapper 
+                defaultFrom={fromDate} 
+                defaultTo={toDate} 
+              />
+            </div>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+              Apply
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -122,7 +172,7 @@ export default async function ManagerFairnessPage() {
                 <Star className="h-6 w-6 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Total Premium Shifts (90d)</p>
+                <p className="text-sm text-slate-500">Total Premium Shifts</p>
                 <p className="text-2xl font-bold text-slate-900">{totalPremiumShifts}</p>
               </div>
             </div>
@@ -156,6 +206,20 @@ export default async function ManagerFairnessPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-purple-50 flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Period</p>
+                <p className="text-2xl font-bold text-slate-900">{daysInRange} days</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Fairness Table */}
@@ -163,13 +227,13 @@ export default async function ManagerFairnessPage() {
         <CardHeader>
           <CardTitle className="text-slate-900">Premium Shift Distribution</CardTitle>
           <CardDescription>
-            Last 90 days • Sorted by premium percentage (lowest first)
+            {format(fromDate, "MMM d, yyyy")} - {format(toDate, "MMM d, yyyy")} • Sorted by premium percentage (lowest first)
           </CardDescription>
         </CardHeader>
         <CardContent>
           {staffFairness.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <p className="text-slate-500">No staff data available</p>
+              <p className="text-slate-500">No staff data available for the selected period</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -203,6 +267,11 @@ export default async function ManagerFairnessPage() {
                         </div>
                         <p className="text-sm text-slate-500">
                           {member.totalShifts} total shifts • {member.totalHours.toFixed(0)}h
+                          {member.desiredHours && (
+                            <span className="ml-2 text-slate-400">
+                              (target: {(member.desiredHours * weeksInRange).toFixed(0)}h)
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -251,5 +320,25 @@ export default async function ManagerFairnessPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+// Client component wrapper for date picker
+function DateRangePickerWrapper({ defaultFrom, defaultTo }: { defaultFrom: Date; defaultTo: Date }) {
+  "use client"
+  const [from, setFrom] = React.useState<Date | undefined>(defaultFrom)
+  const [to, setTo] = React.useState<Date | undefined>(defaultTo)
+  
+  return (
+    <>
+      <input type="hidden" name="from" value={from ? format(from, "yyyy-MM-dd") : ""} />
+      <input type="hidden" name="to" value={to ? format(to, "yyyy-MM-dd") : ""} />
+      <DateRangePicker
+        dateFrom={from}
+        dateTo={to}
+        onDateFromChange={setFrom}
+        onDateToChange={setTo}
+      />
+    </>
   )
 }

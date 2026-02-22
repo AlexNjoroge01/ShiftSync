@@ -8,6 +8,7 @@ import { AddAvailabilityModal } from "@/components/availability/AddAvailabilityM
 import { AddExceptionModal } from "@/components/availability/AddExceptionModal"
 import { DeleteAvailabilityButton } from "@/components/availability/DeleteAvailabilityButton"
 import { EditAvailabilityModal } from "@/components/availability/EditAvailabilityModal"
+import { EditDesiredHoursModal } from "@/components/availability/EditDesiredHoursModal"
 
 export default async function StaffAvailabilityPage() {
   const session = await auth()
@@ -55,9 +56,7 @@ export default async function StaffAvailabilityPage() {
               </span>
               <span className="text-slate-500">hours/week</span>
             </div>
-            <Button variant="outline" className="border-slate-200 text-slate-700">
-              Edit
-            </Button>
+            <EditDesiredHoursModal currentHours={user?.desiredHoursPerWeek} />
           </div>
         </CardContent>
       </Card>

@@ -151,6 +151,67 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // For bilateral SWAP, check constraints for both parties
+    if (validatedData.type === "SWAP" && validatedData.targetShiftAssignmentId) {
+      const { checkAssignmentConstraints } = await import("@/lib/scheduling/constraints")
+      
+      // Get target shift assignment
+      const targetShiftAssignment = await prisma.shiftAssignment.findUnique({
+        where: { id: validatedData.targetShiftAssignmentId },
+        include: {
+          shift: {
+            include: { location: true },
+          },
+        },
+      })
+
+      if (!targetShiftAssignment) {
+        return NextResponse.json(
+          { error: "Target shift assignment not found" },
+          { status: 404 }
+        )
+      }
+
+      // Check if requester can work the target's shift
+      const requesterConstraints = await checkAssignmentConstraints(
+        session.user.id,
+        targetShiftAssignment.shiftId,
+        session.user.id
+      )
+
+      // Check if target can work the requester's shift
+      const targetConstraints = await checkAssignmentConstraints(
+        targetShiftAssignment.userId,
+        shiftAssignment.shiftId,
+        session.user.id
+      )
+
+      // Collect all violations
+      const allViolations = [
+        ...requesterConstraints.violations.map(v => ({ party: "requester", ...v })),
+        ...targetConstraints.violations.map(v => ({ party: "target", ...v })),
+      ]
+
+      // Check for hard blocks (certification, double-booking)
+      const hardBlocks = allViolations.filter(
+        (v) =>
+          v.rule === "CERTIFICATION" ||
+          v.rule === "DOUBLE_BOOKING" ||
+          v.rule === "DAILY_HOURS_12" ||
+          v.rule === "CONSECUTIVE_DAYS_7"
+      )
+
+      if (hardBlocks.length > 0) {
+        return NextResponse.json(
+          {
+            error: "Swap cannot be completed due to constraint violations",
+            violations: hardBlocks,
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Calculate expiry time (24 hours before shift start)
     const expiresAt = new Date(shiftAssignment.shift.startTimeUtc)
     expiresAt.setHours(expiresAt.getHours() - 24)
@@ -189,7 +250,85 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // TODO: Send notification to manager (for DROP) or target user (for SWAP)
+    // Send notification to manager (for DROP) or target user (for SWAP)
+    if (validatedData.type === "DROP") {
+      // Get managers for this location
+      const managers = await prisma.locationAssignment.findMany({
+        where: { locationId: shiftAssignment.shift.locationId },
+        include: {
+          manager: {
+            select: { id: true, name: true, email: true, notificationPreference: true },
+          },
+        },
+      })
+
+      // Create notifications for each manager
+      for (const assignment of managers) {
+        await prisma.notification.create({
+          data: {
+            userId: assignment.managerId,
+            type: "DROP_AVAILABLE",
+            title: "New Drop Request",
+            message: `${session.user.name} has dropped a shift at ${shiftAssignment.shift.location.name} on ${shiftAssignment.shift.date.toLocaleDateString()}`,
+            meta: {
+              swapRequestId: swapRequest.id,
+              shiftId: shiftAssignment.shiftId,
+              locationId: shiftAssignment.shift.locationId,
+            },
+          },
+        })
+
+        // Send email if preference is IN_APP_EMAIL
+        if (assignment.manager.notificationPreference === "IN_APP_EMAIL") {
+          const { sendSwapRequestEmail } = await import("@/lib/email")
+          await sendSwapRequestEmail(assignment.manager.email, assignment.manager.name, {
+            requesterName: session.user.name || "A staff member",
+            shiftDetails: `${shiftAssignment.shift.location.name} on ${shiftAssignment.shift.date.toLocaleDateString()}`,
+            type: "DROP",
+          })
+        }
+      }
+
+      // Broadcast SSE event to managers
+      const { notifySwapRequest } = await import("@/lib/realtime/sse")
+      notifySwapRequest(
+        managers.map((m) => m.managerId),
+        swapRequest.id,
+        session.user.name || "A staff member",
+        `${shiftAssignment.shift.location.name} on ${shiftAssignment.shift.date.toLocaleDateString()}`
+      )
+    } else if (validatedData.type === "SWAP" && validatedData.targetUserId) {
+      // Notify the target user
+      const targetUser = await prisma.user.findUnique({
+        where: { id: validatedData.targetUserId },
+        select: { id: true, name: true, email: true, notificationPreference: true },
+      })
+
+      if (targetUser) {
+        await prisma.notification.create({
+          data: {
+            userId: targetUser.id,
+            type: "SWAP_REQUESTED",
+            title: "New Swap Request",
+            message: `${session.user.name} wants to swap shifts with you`,
+            meta: {
+              swapRequestId: swapRequest.id,
+              shiftId: shiftAssignment.shiftId,
+            },
+          },
+        })
+
+        // Send email if preference is IN_APP_EMAIL
+        if (targetUser.notificationPreference === "IN_APP_EMAIL") {
+          const { sendSwapRequestEmail } = await import("@/lib/email")
+          await sendSwapRequestEmail(targetUser.email, targetUser.name || "Staff", {
+            requesterName: session.user.name || "A staff member",
+            shiftDetails: `${shiftAssignment.shift.location.name} on ${shiftAssignment.shift.date.toLocaleDateString()}`,
+            type: "SWAP",
+          })
+        }
+      }
+    }
 
     return NextResponse.json(swapRequest, { status: 201 })
   } catch (error) {
