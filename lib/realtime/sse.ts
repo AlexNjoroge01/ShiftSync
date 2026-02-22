@@ -11,6 +11,7 @@ type SSEEventType =
   | "swap:new"
   | "swap:updated"
   | "assignment:conflict"
+  | "assignment:new"
   | "onduty:update"
 
 interface SSEEvent {
@@ -213,6 +214,30 @@ export function notifyAssignmentConflict(
       userId,
       userName,
       shiftId,
+      timestamp: new Date().toISOString(),
+    },
+  })
+}
+
+/**
+ * Notify staff about new shift assignment
+ */
+export function notifyNewAssignment(
+  userId: string,
+  shiftId: string,
+  shiftDetails: {
+    locationName: string
+    date: string
+    startTime: string
+    endTime: string
+  }
+): void {
+  broadcast([userId], {
+    type: "assignment:new",
+    payload: {
+      userId,
+      shiftId,
+      shiftDetails,
       timestamp: new Date().toISOString(),
     },
   })

@@ -236,6 +236,7 @@ export type SSEEventType =
   | "swap:new"
   | "swap:updated"
   | "assignment:conflict"
+  | "assignment:new"
   | "onduty:update"
 
 export interface SSEEvent {

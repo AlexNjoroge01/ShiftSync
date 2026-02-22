@@ -1,14 +1,13 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BarChart3, TrendingUp, TrendingDown, Minus, User, Star, Download, RotateCcw } from "lucide-react"
 import type { User as PrismaUser, ShiftAssignment, Shift } from "@prisma/client"
-import { DateRangePicker } from "@/components/ui/date-picker"
 import { format, subDays } from "date-fns"
 import Link from "next/link"
+import { DateRangePickerWrapper } from "@/components/fairness/DateRangePickerWrapper"
 
 type StaffWithFairness = PrismaUser & {
   shiftAssignments: (ShiftAssignment & {
@@ -321,25 +320,5 @@ export default async function ManagerFairnessPage({ searchParams }: PageProps) {
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-// Client component wrapper for date picker
-function DateRangePickerWrapper({ defaultFrom, defaultTo }: { defaultFrom: Date; defaultTo: Date }) {
-  "use client"
-  const [from, setFrom] = React.useState<Date | undefined>(defaultFrom)
-  const [to, setTo] = React.useState<Date | undefined>(defaultTo)
-  
-  return (
-    <>
-      <input type="hidden" name="from" value={from ? format(from, "yyyy-MM-dd") : ""} />
-      <input type="hidden" name="to" value={to ? format(to, "yyyy-MM-dd") : ""} />
-      <DateRangePicker
-        dateFrom={from}
-        dateTo={to}
-        onDateFromChange={setFrom}
-        onDateToChange={setTo}
-      />
-    </>
   )
 }

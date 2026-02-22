@@ -9,6 +9,7 @@ interface UseRealtimeOptions {
   onSwapNew?: (payload: SSEEvent["payload"]) => void
   onSwapUpdated?: (payload: SSEEvent["payload"]) => void
   onAssignmentConflict?: (payload: SSEEvent["payload"]) => void
+  onAssignmentNew?: (payload: SSEEvent["payload"]) => void
   onOndutyUpdate?: (payload: SSEEvent["payload"]) => void
   enabled?: boolean
 }
@@ -23,6 +24,7 @@ export function useRealtime(options: UseRealtimeOptions = {}) {
     onSwapNew,
     onSwapUpdated,
     onAssignmentConflict,
+    onAssignmentNew,
     onOndutyUpdate,
     enabled = true,
   } = options
@@ -36,6 +38,7 @@ export function useRealtime(options: UseRealtimeOptions = {}) {
     onSwapNew,
     onSwapUpdated,
     onAssignmentConflict,
+    onAssignmentNew,
     onOndutyUpdate,
   })
 
@@ -47,9 +50,10 @@ export function useRealtime(options: UseRealtimeOptions = {}) {
       onSwapNew,
       onSwapUpdated,
       onAssignmentConflict,
+      onAssignmentNew,
       onOndutyUpdate,
     }
-  }, [onSchedulePublished, onScheduleUpdated, onSwapNew, onSwapUpdated, onAssignmentConflict, onOndutyUpdate])
+  }, [onSchedulePublished, onScheduleUpdated, onSwapNew, onSwapUpdated, onAssignmentConflict, onAssignmentNew, onOndutyUpdate])
 
   const disconnect = useCallback(() => {
     if (eventSourceRef.current) {
@@ -110,6 +114,9 @@ export function useRealtime(options: UseRealtimeOptions = {}) {
             case "assignment:conflict":
               callbacksRef.current.onAssignmentConflict?.(data.payload)
               break
+            case "assignment:new":
+              callbacksRef.current.onAssignmentNew?.(data.payload)
+              break
             case "onduty:update":
               callbacksRef.current.onOndutyUpdate?.(data.payload)
               break
@@ -166,6 +173,9 @@ export function useRealtime(options: UseRealtimeOptions = {}) {
                 break
               case "assignment:conflict":
                 callbacksRef.current.onAssignmentConflict?.(data.payload)
+                break
+              case "assignment:new":
+                callbacksRef.current.onAssignmentNew?.(data.payload)
                 break
               case "onduty:update":
                 callbacksRef.current.onOndutyUpdate?.(data.payload)

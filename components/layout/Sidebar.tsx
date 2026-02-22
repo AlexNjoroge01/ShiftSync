@@ -35,6 +35,7 @@ const managerLinks = [
   { href: "/manager/swaps", label: "Swap Requests", icon: ArrowLeftRight },
   { href: "/manager/overtime", label: "Overtime", icon: BarChart3 },
   { href: "/manager/fairness", label: "Fairness", icon: BarChart3 },
+  { href: "/manager/audit", label: "Audit Log", icon: Shield },
 ]
 
 const staffLinks = [

@@ -29,9 +29,9 @@ export function PublishWeekButton({ shiftIds, locationId, weekStart }: PublishWe
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          shiftIds,
           locationId,
           weekStart,
+          action: "publish",
         }),
       })
 

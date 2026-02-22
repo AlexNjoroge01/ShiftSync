@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { checkAssignmentConstraints } from "@/lib/scheduling/constraints"
+import { notifyNewAssignment } from "@/lib/realtime/sse"
 import { z } from "zod"
 
 const assignSchema = z.object({
@@ -165,6 +166,29 @@ export async function POST(
       })
 
       return assignment
+    })
+
+    // Create in-app notification for the assigned staff
+    await prisma.notification.create({
+      data: {
+        userId: validatedData.userId,
+        type: "SHIFT_ASSIGNED",
+        title: "New Shift Assignment",
+        message: `You have been assigned to a shift at ${result.shift.location.name} on ${result.shift.date.toLocaleDateString()}`,
+        meta: {
+          shiftId,
+          locationId: result.shift.locationId,
+          date: result.shift.date.toISOString(),
+        },
+      },
+    })
+
+    // Send real-time notification
+    notifyNewAssignment(validatedData.userId, shiftId, {
+      locationName: result.shift.location.name,
+      date: result.shift.date.toISOString(),
+      startTime: result.shift.startTimeUtc.toISOString(),
+      endTime: result.shift.endTimeUtc.toISOString(),
     })
 
     return NextResponse.json(result, { status: 201 })
